@@ -72,14 +72,14 @@ impl Client for TelegramClient {
 
 #[async_trait]
 impl Worker for TelegramClient {
-    async fn on_tick(&mut self) {
+    async fn on_tick(&mut self) -> bool {
         let updates = match self.get_update().await {
             Ok(updates) => {
                 updates
             },
             Err(e) => {
                 error!("[TelegramClient] Err: {e}");
-                return;
+                return false;
             }
         };
 
@@ -93,6 +93,8 @@ impl Worker for TelegramClient {
                 cb(message.chat.id.to_string().as_str(), text.as_str());
             }
         }
+        
+        true
     }
 
     fn get_name(&self) -> &str {

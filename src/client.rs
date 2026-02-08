@@ -43,7 +43,7 @@ impl Client for ClientKind {
 #[async_trait]
 impl Worker for ClientKind {
 
-    async fn on_tick(&mut self) {
+    async fn on_tick(&mut self) -> bool {
         match self {
             Telegram(c) => c.on_tick().await
         }

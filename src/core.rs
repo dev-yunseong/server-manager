@@ -1,34 +1,53 @@
-mod runner;
 pub  mod registrar;
 
 use crate::client::ClientKind;
 use std::collections::HashMap;
+use std::time::Duration;
 use async_trait::async_trait;
+use tokio::task::JoinHandle;
 
 #[async_trait]
-pub trait Worker {
-    async fn on_tick(&mut self);
+pub trait Worker: Send {
+    async fn on_tick(&mut self) -> bool;
     fn get_name(&self) -> &str;
     fn interval(&self) -> i32;
 }
 
 pub struct WorkerRegistry {
-    workers: HashMap<String, Box<dyn Worker>>
+    handles: HashMap<String, JoinHandle<()>>
 }
 
 impl WorkerRegistry {
 
     fn new() -> Self {
         Self {
-            workers: HashMap::new()
+            handles: HashMap::new()
         }
     }
 
-    fn register(&mut self, worker: Box<dyn Worker>) {
-        self.workers.insert(
-            worker.get_name().to_string(),
-            worker
-        );
+    fn register(&mut self, mut worker: Box<dyn Worker>) {
+        let key = worker.get_name().to_string();
+        let handle = tokio::spawn(async move {
+
+            let mut interval = tokio::time::interval(Duration::from_millis(worker.interval() as u64));
+
+            loop {
+                interval.tick().await;
+                if !worker.on_tick().await {
+                    break;
+                }
+            }
+        });
+        self.handles.insert(key, handle);
+    }
+
+    fn stop(&mut self, key: &str) {
+        let handle = match self.handles.get_mut(key) {
+            Some(handle) => handle,
+            None => return
+        };
+        handle.abort();
+        self.handles.remove(key);
     }
 
     async fn load(&mut self) {
@@ -47,6 +66,9 @@ impl WorkerRegistry {
 
 #[cfg(test)]
 mod tests {
+    use std::env;
+    use dotenv::dotenv;
+    use crate::client::Client;
     use crate::core::*;
     use crate::core::registrar;
     use crate::core::registrar::config::{ClientConfig, Config};
@@ -65,10 +87,24 @@ mod tests {
         let mut registry = WorkerRegistry::new();
         registry.load().await;
 
-         let client_num = registry.workers.len();
+         let client_num = registry.handles.len();
 
         registrar::remove().await;
 
         assert_eq!(last_client_num, client_num);
+    }
+
+    #[tokio::test]
+    async fn run_work() {
+        dotenv().ok();
+        let token = env::var("TELEGRAM_TOKEN").unwrap();
+        let mut registry = WorkerRegistry::new();
+        let mut client = ClientKind::from(
+            ClientConfig::new_telegram("name", token.as_str())).unwrap();
+
+        client.set_callback(|chat_id, text| {println!("{chat_id}: {text}")});
+        registry.register(Box::new(client));
+
+        tokio::signal::ctrl_c().await.unwrap();
     }
 }
