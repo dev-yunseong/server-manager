@@ -4,4 +4,9 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-
+anyhow = "1.0.101"
+rust-api-client = { path = "app/rust-api-client" }
+serde = { version = "1.0.228", features = ["derive"] }
+tokio = { version = "1.49.0", features = ["full"] }
+log = "0.4.29"
+dotenv = "0.15.0"
