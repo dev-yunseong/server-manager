@@ -42,14 +42,14 @@ pub struct Update {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Chat {
-    id: i64,
-    r#type: String,
-    title: Option<String>,
-    username: Option<String>,
-    first_name: Option<String>,
-    last_name: Option<String>,
-    is_forum: Option<bool>,
-    is_direct_messages: Option<bool>
+    pub  id: i64,
+    pub  r#type: String,
+    pub  title: Option<String>,
+    pub  username: Option<String>,
+    pub  first_name: Option<String>,
+    pub  last_name: Option<String>,
+    pub  is_forum: Option<bool>,
+    pub  is_direct_messages: Option<bool>
 }
 
 #[derive(Serialize, Deserialize, Debug)]

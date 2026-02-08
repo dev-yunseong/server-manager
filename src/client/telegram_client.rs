@@ -1,6 +1,8 @@
 mod dto;
 
+use std::any::Any;
 use anyhow::{anyhow, Result};
+use async_trait::async_trait;
 use crate::client::Client;
 use rust_api_client::api::ApiClient;
 use dto::SendMessageDto;
@@ -9,14 +11,16 @@ use crate::client::telegram_client::dto::{Message, TelegramResponse, Update};
 use crate::core::Worker;
 
 pub struct TelegramClient {
+    name: String,
     api_client: ApiClient,
     offset: i64,
-    callback: Option<Box<dyn Fn(&str)>>
+    callback: Option<Box<dyn Fn(&str, &str) + Send + Sync>>
 }
 
 impl TelegramClient {
-    pub fn new(token: &str) -> Self {
+    pub fn new(name: String, token: String) -> Self {
         Self {
+            name,
             api_client: ApiClient::new(format!("https://api.telegram.org/bot{token}")),
             callback: None,
             offset: 0
@@ -46,6 +50,7 @@ impl TelegramClient {
     }
 }
 
+#[async_trait]
 impl Client for TelegramClient {
     async fn send_message(&self, chat_id: &str, data: &str) -> bool {
         let response = self.api_client
@@ -61,11 +66,12 @@ impl Client for TelegramClient {
         true
     }
 
-    fn set_callback(&mut self, callback: impl Fn(&str) + 'static) {
+    fn set_callback(&mut self, callback: impl Fn(&str, &str) + 'static  + Send + Sync) {
         self.callback = Some(Box::new(callback))
     }
 }
 
+#[async_trait]
 impl Worker for TelegramClient {
     async fn on_tick(&mut self) {
         let updates = match self.get_update().await {
@@ -85,13 +91,25 @@ impl Worker for TelegramClient {
             let text = message.text.unwrap();
 
             if let Some(cb) = self.callback.as_ref() {
-                cb(text.as_str());
+                cb(message.chat.id.to_string().as_str(), text.as_str());
             }
         }
     }
 
-    fn interval_ms() -> i32 {
-        5000
+    fn get_name(&self) -> &str {
+        self.name.as_str()
+    }
+
+    fn interval(&self) -> i32 {
+        5
+    }
+
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+
+    fn as_any_mut(&mut self) -> &mut dyn Any {
+        self
     }
 }
 
@@ -105,7 +123,7 @@ mod tests {
     async fn get_update() {
         dotenv().ok();
         let token = env::var("TELEGRAM_TOKEN").unwrap();
-        let mut telegram_client = TelegramClient::new(token.as_str());
+        let mut telegram_client = TelegramClient::new("test_client".to_string(), token);
         let response = telegram_client.get_update().await;
 
         assert!(response.is_ok());
@@ -121,7 +139,7 @@ mod tests {
     async fn send_message() {
         dotenv().ok();
         let token = env::var("TELEGRAM_TOKEN").unwrap();
-        let telegram_client = TelegramClient::new(token.as_str());
+        let telegram_client = TelegramClient::new("test_client".to_string(), token);
          telegram_client.send_message(env::var("CHAT_ID").unwrap().as_str(), "test message").await;
     }
 }
