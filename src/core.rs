@@ -44,3 +44,31 @@ impl WorkerRegistry {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::core::*;
+    use crate::core::registrar;
+    use crate::core::registrar::config::{ClientConfig, Config};
+
+    #[tokio::test]
+    async fn load() {
+        registrar::init().await;
+
+        let mut config = Config::new();
+        config.clients.push(ClientConfig::new_telegram("name", "token"));
+        let last_client_num = config.clients.len();
+        registrar::write(config).await;
+
+
+
+        let mut registry = WorkerRegistry::new();
+        registry.load().await;
+
+         let client_num = registry.workers.len();
+
+        registrar::remove().await;
+
+        assert_eq!(last_client_num, client_num);
+    }
+}
