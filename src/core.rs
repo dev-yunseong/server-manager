@@ -1,9 +1,32 @@
+mod runner;
+mod registrar;
 
+use std::collections::HashMap;
+use async_trait::async_trait;
+
+#[async_trait]
 pub trait Worker {
     async fn on_tick(&mut self);
     fn get_name(&self) -> &str;
     fn interval(&self) -> i32;
+}
 
-    fn as_any(&self) -> &dyn Any;
-    fn as_any_mut(&mut self) -> &mut dyn Any;
+pub struct WorkerRegistry {
+    workers: HashMap<String, Box<dyn Worker>>
+}
+
+impl WorkerRegistry {
+
+    fn new() -> Self {
+        Self {
+            workers: HashMap::new()
+        }
+    }
+
+    fn register(&mut self, worker: Box<dyn Worker>) {
+        self.workers.insert(
+            worker.get_name().to_string(),
+            worker
+        );
+    }
 }
