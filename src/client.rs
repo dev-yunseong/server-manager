@@ -1,12 +1,12 @@
+mod telegram;
+
 use async_trait::async_trait;
 use tokio::sync::broadcast::Receiver;
 use crate::client::ClientKind::Telegram;
-use crate::client::telegram_client::dto::SendMessageDto;
-use crate::client::telegram_client::TelegramClient;
+use crate::client::telegram::dto::SendMessageDto;
+use crate::client::telegram::TelegramClient;
 use crate::core::worker::Worker;
 use crate::core::config::ClientConfig;
-
-mod telegram_client;
 
 #[async_trait]
 pub trait Client : Worker + Clone {
