@@ -9,6 +9,20 @@ pub struct SendMessageDto {
 }
 
 #[derive(Serialize, Deserialize)]
+pub struct GetUpdateDto {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub offset: Option<i64>
+}
+
+impl GetUpdateDto {
+    pub fn new(offset: i64) -> Self {
+        Self {
+            offset: Some(offset)
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize)]
 pub struct ReplyMarkup {
     pub inline_keyboard: Vec<InlineKeyboardButton>
 }

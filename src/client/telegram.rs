@@ -8,7 +8,7 @@ use rust_api_client::api::ApiClient;
 use dto::SendMessageDto;
 use log::{debug, error, warn};
 use tokio::sync::broadcast::{self, Receiver, Sender};
-use crate::client::telegram::dto::{Message, TelegramResponse, Update};
+use crate::client::telegram::dto::{GetUpdateDto, Message, TelegramResponse, Update};
 use crate::core::worker::Worker;
 
 #[derive(Clone)]
@@ -30,8 +30,9 @@ impl TelegramClient {
     }
 
     async fn get_update(&mut self) -> Result<Vec<Update>> {
-        let offset = self.offset.to_string();
-        match self.api_client.get_json::<TelegramResponse<Vec<Update>>>("getUpdates", None, Some(&[("offset", offset.as_str())])).await {
+        let offset = self.offset;
+        let dto = GetUpdateDto::new(offset);
+        match self.api_client.post_json::<GetUpdateDto, TelegramResponse<Vec<Update>>>("getUpdates", &dto, None).await {
             Ok(updates) => {
 
                 debug!("[TelegramClient] Ok: Successfully get update");
@@ -58,7 +59,7 @@ impl Client for TelegramClient {
         let response = self.api_client
             .post_json::<SendMessageDto, TelegramResponse<Message>> (
                 "sendMessage",
-                &send_message_dto, None, None).await;
+                &send_message_dto, None).await;
 
         if response.is_err() {
             error!("[Err]: {}", response.err().unwrap().to_string());
