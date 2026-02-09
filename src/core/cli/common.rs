@@ -1,5 +1,5 @@
 use regex::Regex;
-use tokio::io::{stdin, AsyncBufReadExt, AsyncReadExt, BufReader};
+use tokio::io::{stdin, AsyncBufReadExt, BufReader};
 
 pub async fn read_string_option(name: &str) -> Option<String> {
     let mut reader = BufReader::new(stdin());
@@ -9,7 +9,7 @@ pub async fn read_string_option(name: &str) -> Option<String> {
         let mut value = String::new();
         match reader.read_line(&mut value).await {
             Ok(_) => (),
-            Err(e) => continue
+            Err(_) => continue
         }
 
         let value = value.trim();
@@ -33,7 +33,7 @@ pub async fn read_string(name: &str) -> String {
         let mut value = String::new();
         match reader.read_line(&mut value).await {
             Ok(_) => (),
-            Err(e) => continue
+            Err(_) => continue
         }
 
         let value = value.trim();
@@ -53,7 +53,7 @@ pub async fn read_int(name: &str) -> i32 {
         let mut value = String::new();
         match reader.read_line(&mut value).await {
             Ok(_) => (),
-            Err(e) => continue
+            Err(_) => continue
         }
 
         let value = value.trim();
@@ -62,7 +62,7 @@ pub async fn read_int(name: &str) -> i32 {
             Ok(value) => {
               return value
             },
-            Err(e) => {
+            Err(_) => {
                 println!("invalid input");
                 continue;
             }

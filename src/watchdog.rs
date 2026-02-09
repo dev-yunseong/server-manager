@@ -68,8 +68,8 @@ impl Watchdog for HttpWatchdog {
             .await;
 
         match response {
-            Ok(response) => Health::Running,
-            Err(e) => Health::Dead
+            Ok(_) => Health::Running,
+            Err(_) => Health::Dead
         }
     }
 

@@ -1,5 +1,4 @@
 use clap::Subcommand;
-use tokio::io::{stdin, AsyncReadExt};
 use crate::core::cli::common::{read_int, read_string, read_string_option};
 use crate::core::config::{add_server, read, ServerConfig};
 use crate::watchdog::server::Server;

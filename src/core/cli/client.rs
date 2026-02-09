@@ -1,10 +1,6 @@
-use clap::{command, Subcommand};
-use crate::client::ClientKind;
-use crate::core::app::App;
+use clap::Subcommand;
 use crate::core::cli::common::{read_string, read_string_option};
 use crate::core::config::{add_client, read, ClientConfig};
-use crate::core::worker::Worker;
-use crate::watchdog::server::Server;
 
 #[derive(Subcommand)]
 pub enum ClientCommands {
@@ -20,7 +16,10 @@ impl ClientCommands {
                 let kind = read_string("kind (ex: telegram)").await;
                 let token = read_string_option("Token").await;
 
-                add_client(ClientConfig::new_telegram(name.as_str(), token.unwrap().as_str())).await;
+                match kind.as_str() {
+                    "telegram" => add_client(ClientConfig::new_telegram(name.as_str(), token.unwrap().as_str())).await,
+                    _ => println!("kind({kind}) is not available")
+                }
             },
             ClientCommands::List => {
                 let config = read().await;

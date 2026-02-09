@@ -1,5 +1,4 @@
 use async_trait::async_trait;
-use log::error;
 use tokio::sync::broadcast::Receiver;
 use crate::client::ClientKind::Telegram;
 use crate::client::telegram_client::dto::SendMessageDto;
