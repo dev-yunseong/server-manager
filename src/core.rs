@@ -1,4 +1,4 @@
-pub  mod registrar;
+pub mod config;
 
 use crate::client::ClientKind;
 use std::collections::HashMap;
@@ -19,7 +19,7 @@ pub struct WorkerRegistry {
 
 impl WorkerRegistry {
 
-    fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             handles: HashMap::new()
         }
@@ -50,8 +50,8 @@ impl WorkerRegistry {
         self.handles.remove(key);
     }
 
-    async fn load(&mut self) {
-        let config = registrar::read().await;
+    pub async fn load(&mut self) {
+        let config = config::read().await;
 
         for client_config in config.clients.into_iter() {
             let client = ClientKind::from(client_config);
@@ -68,26 +68,27 @@ impl WorkerRegistry {
 mod tests {
     use std::env;
     use dotenv::dotenv;
+    use log::error;
     use crate::client::Client;
     use crate::core::*;
-    use crate::core::registrar;
-    use crate::core::registrar::config::{ClientConfig, Config};
+    use crate::core::config;
+    use crate::core::config::{ClientConfig, Config};
 
     #[tokio::test]
     async fn load() {
-        registrar::init().await;
+        config::init().await;
 
         let mut config = Config::new();
         config.clients.push(ClientConfig::new_telegram("name", "token"));
         let last_client_num = config.clients.len();
-        registrar::write(config).await;
+        config::write(config).await;
 
         let mut registry = WorkerRegistry::new();
         registry.load().await;
 
          let client_num = registry.handles.len();
 
-        registrar::remove().await;
+        config::remove().await;
 
         assert_eq!(last_client_num, client_num);
     }

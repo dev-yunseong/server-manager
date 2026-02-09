@@ -1,8 +1,8 @@
-pub  mod config;
+mod data;
 
 use std::path::PathBuf;
 use tokio::fs;
-use crate::core::registrar::config::Config;
+pub use data::*;
 
 pub  async fn init() {
     let directory_path = get_directory_path()
@@ -69,8 +69,8 @@ fn get_directory_path() -> Option<PathBuf> {
 
 #[cfg(test)]
 mod tests {
-    use crate::core::registrar::*;
-    use crate::core::registrar::config::ClientConfig;
+    use crate::core::config::*;
+    use crate::core::config::data::ClientConfig;
 
     #[tokio::test]
     async fn init_and_remove() {
