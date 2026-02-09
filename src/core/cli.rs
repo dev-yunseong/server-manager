@@ -3,7 +3,6 @@ mod client;
 mod common;
 
 use clap::{Parser, Subcommand};
-use crate::core::app;
 use crate::core::app::App;
 use crate::core::cli::client::ClientCommands;
 use crate::core::cli::server::ServerCommands;
