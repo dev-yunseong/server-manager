@@ -1,4 +1,5 @@
 use async_trait::async_trait;
+use tokio::sync::broadcast::Receiver;
 use crate::client::ClientKind::Telegram;
 use crate::client::telegram_client::TelegramClient;
 use crate::core::Worker;
@@ -9,7 +10,7 @@ mod telegram_client;
 #[async_trait]
 pub  trait Client : Worker + Clone {
     async fn send_message(&self, chat_id: &str, data: &str) -> bool;
-    fn set_callback(&mut self, callback: impl Fn(&str, &str) + 'static + Send + Sync);
+    fn subscribe(&mut self) -> Receiver<(String, String)>;
 }
 
 impl ClientKind {
@@ -33,9 +34,9 @@ impl Client for ClientKind {
         }
     }
 
-    fn set_callback(&mut self, callback: impl Fn(&str, &str) + 'static + Send + Sync) {
+    fn subscribe(&mut self) -> Receiver<(String, String)> {
         match self {
-            Telegram(c) => c.set_callback(callback)
+            Telegram(c) => c.subscribe()
         }
     }
 }

@@ -6,7 +6,9 @@ use async_trait::async_trait;
 use crate::client::Client;
 use rust_api_client::api::ApiClient;
 use dto::SendMessageDto;
-use log::{debug, error};
+use log::{debug, error, warn};
+use tokio::sync::broadcast;
+use tokio::sync::broadcast::{Receiver, Sender};
 use crate::client::telegram_client::dto::{Message, TelegramResponse, Update};
 use crate::core::Worker;
 
@@ -15,7 +17,7 @@ pub struct TelegramClient {
     name: String,
     api_client: Arc<ApiClient>,
     offset: i64,
-    callback: Option<Arc<dyn Fn(&str, &str) + Send + Sync>>
+    tx: Option<Sender<(String, String)>>
 }
 
 impl TelegramClient {
@@ -23,8 +25,8 @@ impl TelegramClient {
         Self {
             name,
             api_client: Arc::new(ApiClient::new(format!("https://api.telegram.org/bot{token}"))),
-            callback: None,
-            offset: 0
+            offset: 0,
+            tx: None
         }
     }
 
@@ -67,8 +69,15 @@ impl Client for TelegramClient {
         true
     }
 
-    fn set_callback(&mut self, callback: impl Fn(&str, &str) + 'static  + Send + Sync) {
-        self.callback = Some(Arc::new(callback))
+    fn subscribe(&mut self) -> Receiver<(String, String)> {
+        match &self.tx {
+            Some(tx) => tx.subscribe(),
+            None => {
+                let (tx, rx) = broadcast::channel::<(String, String)>(16);
+                self.tx = Some(tx);
+                rx
+            }
+        }
     }
 }
 
@@ -91,8 +100,11 @@ impl Worker for TelegramClient {
             if message.text.is_none() { continue }
             let text = message.text.unwrap();
 
-            if let Some(cb) = self.callback.as_ref() {
-                cb(message.chat.id.to_string().as_str(), text.as_str());
+            if let Some(tx) = &self.tx {
+                let chat_id = message.chat.id.to_string();
+                if let Err(e) = tx.send((chat_id, text)) {
+                    warn!("[TelegramClient] Err: {}", e);
+                }
             }
         }
 

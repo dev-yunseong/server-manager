@@ -100,15 +100,24 @@ mod tests {
         let mut client = ClientKind::from(
             ClientConfig::new_telegram("name", token.as_str())).unwrap();
 
+        let mut rx = client.subscribe();
         let client_for_callback = client.clone();
-        client.set_callback(move |chat_id, text| {
-            let chat_id_owned = chat_id.to_string();
-            let text_owned = text.to_string();
-            let value = client_for_callback.clone();
-            tokio::spawn(async move {value.send_message(chat_id_owned.as_str(), format!("echo {chat_id_owned}: {text_owned}").as_str()).await;});
+        tokio::spawn(async move {
+            loop {
+                match rx.recv().await {
+                    Ok(message) => {
+                        let chat_id_owned = message.0;
+                        let text_owned = message.1;
+                        client_for_callback.send_message(chat_id_owned.as_str(), format!("echo {chat_id_owned}: {text_owned}").as_str()).await;
+                    },
+                    Err(e) => {
+                        error!("[Err]: {}", e);
+                        break;
+                    }
+                }
+            }
         });
         registry.register(Box::new(client));
-
         tokio::signal::ctrl_c().await.unwrap();
     }
 }
