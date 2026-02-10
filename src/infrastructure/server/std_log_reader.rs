@@ -26,7 +26,6 @@ impl StdLogReader {
 
             args.insert(0, "-n");
             args.insert(1, &n_str);
-            println!("실행될 명령어: {} {:?}", log_command[0].as_str(), args);
 
             let result = self.system_command_executor.capture_output(
                 log_command[0].as_str(),
