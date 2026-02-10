@@ -12,6 +12,8 @@ Once Rust and Cargo are installed, clone the repository and build the project:
 cargo install server-watchdog 
 ```
 
+If you encounter issues during installation, please refer to the [Troubleshooting Guide](TROUBLESHOOTING.md).
+
 ## Configuration
 
 ### Server Management
