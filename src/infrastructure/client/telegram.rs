@@ -3,7 +3,6 @@ pub mod dto;
 use std::sync::Arc;
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
-use rust_api_client::api::ApiClient;
 use dto::SendMessageDto;
 use log::{debug, error, warn};
 use tokio::sync::mpsc::{Sender};
@@ -11,6 +10,7 @@ use crate::application::worker::Worker;
 use crate::domain;
 use crate::infrastructure::client::common::Client;
 use crate::infrastructure::client::telegram::dto::{GetUpdateDto, Message, TelegramResponse, Update};
+use crate::infrastructure::common::api_client::ApiClient;
 
 #[derive(Clone)]
 pub struct TelegramClient {
@@ -33,7 +33,7 @@ impl TelegramClient {
     async fn get_update(&mut self) -> Result<Vec<Update>> {
         let offset = self.offset;
         let dto = GetUpdateDto::new(offset);
-        match self.api_client.post_json::<GetUpdateDto, TelegramResponse<Vec<Update>>>("getUpdates", &dto, None).await {
+        match self.api_client.post_json::<GetUpdateDto, TelegramResponse<Vec<Update>>>("getUpdates", &dto, None, None).await {
             Ok(updates) => {
 
                 debug!("[TelegramClient] Ok: Successfully get update");
@@ -57,7 +57,7 @@ impl TelegramClient {
         let response = self.api_client
             .post_json::<SendMessageDto, TelegramResponse<Message>> (
                 "sendMessage",
-                &send_message_dto, None).await;
+                &send_message_dto, None, None).await;
 
         if response.is_err() {
             error!("[Err]: {}", response.err().unwrap().to_string());
