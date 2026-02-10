@@ -1,6 +1,7 @@
 use clap::Subcommand;
-use crate::core::cli::util::{read_string, read_string_option};
-use crate::core::config::{add_client, read, ClientConfig};
+use crate::application::config::ClientConfigUseCase;
+use crate::domain::config::ClientConfig;
+use crate::infrastructure::cli::util::{read_string, read_string_option};
 
 #[derive(Subcommand)]
 pub enum ClientCommands {
@@ -9,25 +10,30 @@ pub enum ClientCommands {
 }
 
 impl ClientCommands {
-    pub async fn run(&self) {
+    pub async fn run(&self, client_config_use_case: Box<dyn ClientConfigUseCase>) {
         match self {
             ClientCommands::Add => {
                 let name = read_string("Name").await;
                 let kind = read_string("kind (ex: telegram)").await;
                 let token = read_string_option("Token").await;
 
-                match kind.as_str() {
-                    "telegram" => add_client(ClientConfig::new_telegram(name.as_str(), token.unwrap().as_str())).await,
-                    _ => println!("kind({kind}) is not available")
-                }
+                let client = match kind.as_str() {
+                    "telegram" => ClientConfig::new_telegram(name.as_str(), token.unwrap().as_str()),
+                    _ => { 
+                        println!("kind({kind}) is not available");
+                        return;
+                    }
+                };
+                
+                client_config_use_case.add_client(client).await;
             },
             ClientCommands::List => {
-                let config = read().await;
+                let clients = client_config_use_case.list_client().await;
                 println!("--- Client List ---");
-                if config.clients.is_empty() {
+                if clients.is_empty() {
                     println!("Empty Client");
                 } else {
-                    for client in config.clients {
+                    for client in clients {
                         println!(
                             "=========\nName: {}\nKind: {}\nToken: {}\n\n",
                             client.name,

@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use crate::core::config::ServerConfig;
+use crate::domain::config::ServerConfig;
 
 #[derive(Serialize, Deserialize)]
 pub struct Server {

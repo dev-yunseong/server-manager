@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 use tokio::fs;
-use crate::core::config::data::{ClientConfig, Config, ServerConfig};
+use crate::domain::config::{Config, ServerConfig};
 
 pub async fn init() {
     let directory_path = get_directory_path()
@@ -20,20 +20,6 @@ pub async fn init() {
         fs::write(config_path, placeholder).await
             .expect("Fail to save");
     }
-}
-
-pub async fn add_client(client_config: ClientConfig) {
-    init().await;
-    let mut config = read().await;
-    config.clients.push(client_config);
-    write(config).await;
-}
-
-pub async fn add_server(server_config: ServerConfig) {
-    init().await;
-    let mut config = read().await;
-    config.servers.push(server_config);
-    write(config).await;
 }
 
 pub async fn read() -> Config {
@@ -81,8 +67,9 @@ fn get_directory_path() -> Option<PathBuf> {
 
 #[cfg(test)]
 mod tests {
-    use crate::core::config::data::ClientConfig;
-    use crate::core::config::*;
+    use crate::domain::config::ClientConfig;
+    use crate::infrastructure::config::{init, read, write};
+    use crate::infrastructure::config::common::remove;
 
     #[tokio::test]
     async fn init_and_remove() {

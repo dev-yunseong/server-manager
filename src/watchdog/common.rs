@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use log::{error, info};
 use reqwest::Client;
-use crate::watchdog::server::Server;
+use crate::domain::server::Server;
 use crate::watchdog::WatchdogKind::{Http};
 
 #[async_trait]

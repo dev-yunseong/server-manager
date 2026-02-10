@@ -3,20 +3,21 @@ pub mod dto;
 use std::sync::Arc;
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
-use crate::client::Client;
 use rust_api_client::api::ApiClient;
 use dto::SendMessageDto;
 use log::{debug, error, warn};
-use tokio::sync::broadcast::{self, Receiver, Sender};
-use crate::client::telegram::dto::{GetUpdateDto, Message, TelegramResponse, Update};
-use crate::core::worker::Worker;
+use tokio::sync::mpsc::{Sender};
+use crate::application::worker::Worker;
+use crate::domain;
+use crate::infrastructure::client::common::Client;
+use crate::infrastructure::client::telegram::dto::{GetUpdateDto, Message, TelegramResponse, Update};
 
 #[derive(Clone)]
 pub struct TelegramClient {
     name: String,
     api_client: Arc<ApiClient>,
     offset: i64,
-    tx: Option<Sender<(String, String)>>
+    tx: Option<Sender<domain::client::Message>>
 }
 
 impl TelegramClient {
@@ -74,15 +75,8 @@ impl Client for TelegramClient {
         self.send_message_direct(SendMessageDto::new(chat_id, data, None)).await
     }
 
-    fn subscribe(&mut self) -> Receiver<(String, String)> {
-        match &self.tx {
-            Some(tx) => tx.subscribe(),
-            None => {
-                let (tx, rx) = broadcast::channel::<(String, String)>(16);
-                self.tx = Some(tx);
-                rx
-            }
-        }
+    fn subscribe(&mut self, tx: Sender<domain::client::Message>) {
+        self.tx = Some(tx);
     }
 }
 
@@ -100,7 +94,7 @@ impl Worker for TelegramClient {
         };
 
         for update in updates {
-            let message = if let Some(msg) = update.message {
+            let (chat_id, data) = if let Some(msg) = update.message {
                 (msg.chat.id.to_string(), msg.text.unwrap_or("".to_string()))
             } else if let Some(cb) = update.callback_query {
                 let chat_id = match cb.message {
@@ -112,9 +106,12 @@ impl Worker for TelegramClient {
             } else {
                 continue;
             };
+            let message = domain::client::Message::new(
+                self.get_name().to_string(), chat_id, data
+            );
 
             if let Some(tx) = &self.tx {
-                if let Err(e) = tx.send(message) {
+                if let Err(e) = tx.send(message).await {
                     warn!("[TelegramClient] Err: {}", e);
                 }
             }

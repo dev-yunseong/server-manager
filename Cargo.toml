@@ -22,3 +22,5 @@ clap = { version = "4.5.57", features = ["derive"] }
 regex = "1.12.3"
 env_logger = "0.11.8"
 rust-api-client = "1.0.0"
+derive-new = "0.7.0"
+dyn-clone = "1.0.20"

@@ -1,7 +1,9 @@
 use clap::Subcommand;
-use crate::core::cli::util::{read_int, read_string, read_string_option};
-use crate::core::config::{add_server, read, ServerConfig};
-use crate::watchdog::server::Server;
+use crate::application::config::ServerConfigUseCase;
+use crate::domain::config::ServerConfig;
+use crate::domain::server::Server;
+use crate::infrastructure::cli::util::{read_int, read_string, read_string_option};
+use crate::infrastructure::config::ServerConfigAdapter;
 
 #[derive(Subcommand)]
 pub enum ServerCommands {
@@ -10,7 +12,7 @@ pub enum ServerCommands {
 }
 
 impl ServerCommands {
-    pub async fn run(&self) {
+    pub async fn run(&self, server_config_adapter: Box<dyn ServerConfigUseCase>) {
         match self {
             ServerCommands::Add => {
                 println!("--- Add Server ---");
@@ -22,15 +24,18 @@ impl ServerCommands {
                 let kill_path = read_string_option("kill path").await;
                 
                 let config = ServerConfig::new(name.as_str(), proto.as_str(), host.as_str(), port as i16, health_check_path, kill_path);
-                add_server(config).await;
+                server_config_adapter.add_server(config).await;
             },
             ServerCommands::List => {
-                let config = read().await;
+                let server_config_adapter = ServerConfigAdapter {};
+                let servers = server_config_adapter.list_server().await;
+
                 println!("--- Server List ---");
-                if config.servers.is_empty() {
+
+                if servers.is_empty() {
                     println!("Empty Server");
                 } else {
-                    for server in config.servers {
+                    for server in servers {
                         let server = Server::from(server);
                         println!(
                             "=========\nName: {}\nBASE URL: {}\nKill URL: {}\nHealth Check URL: {}\n\n",

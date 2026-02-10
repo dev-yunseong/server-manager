@@ -1,5 +1,5 @@
 use clap::Parser;
-use server_watchdog::core::cli::Cli;
+use server_watchdog::infrastructure::cli::Cli;
 
 #[tokio::main]
 async fn main() {
