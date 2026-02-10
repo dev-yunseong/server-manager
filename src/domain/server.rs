@@ -41,3 +41,7 @@ impl Server {
     }
 }
 
+pub enum Health {
+    Running, Dead, Drowning, Unknown
+}
+
