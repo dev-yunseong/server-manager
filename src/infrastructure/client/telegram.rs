@@ -4,7 +4,7 @@ use std::sync::Arc;
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
 use dto::SendMessageDto;
-use log::{debug, error, warn};
+use log::{debug, error, trace, warn};
 use tokio::sync::mpsc::{Sender};
 use crate::application::worker::Worker;
 use crate::domain;
@@ -22,6 +22,7 @@ pub struct TelegramClient {
 
 impl TelegramClient {
     pub fn new(name: String, token: String) -> Self {
+        trace!("TelegramClient::new(name: {}, token: ...)", &name);
         Self {
             name,
             api_client: Arc::new(ApiClient::new(format!("https://api.telegram.org/bot{token}"))),
@@ -31,18 +32,21 @@ impl TelegramClient {
     }
 
     async fn get_update(&mut self) -> Result<Vec<Update>> {
+        trace!("TelegramClient::get_update");
         let offset = self.offset;
         let dto = GetUpdateDto::new(offset);
+        debug!("get_update request: {:?}", &dto);
         match self.api_client.post_json::<GetUpdateDto, TelegramResponse<Vec<Update>>>("getUpdates", &dto, None, None).await {
             Ok(updates) => {
-
                 debug!("[TelegramClient] Ok: Successfully get update");
                 if !updates.ok {
                     return Err(anyhow!("[TelegramClient] status: {} {}", updates.error_code.unwrap(), updates.description.unwrap()));
                 }
+                debug!("get_update response: {:?}", &updates.result);
 
                 if let Some(new_offset) = updates.result.iter().map(|update: &Update|{update.update_id}).max() {
                     self.offset = new_offset + 1;
+                    debug!("new offset: {}", &self.offset);
                 }
 
                 Ok(updates.result)
@@ -54,6 +58,8 @@ impl TelegramClient {
     }
 
     async fn send_message_direct(&self, send_message_dto: SendMessageDto) -> bool {
+        trace!("TelegramClient::send_message_direct");
+        debug!("send_message_direct request: {:?}", &send_message_dto);
         let response = self.api_client
             .post_json::<SendMessageDto, TelegramResponse<Message>> (
                 "sendMessage",
@@ -63,6 +69,7 @@ impl TelegramClient {
             error!("[Err]: {}", response.err().unwrap().to_string());
             return false
         }
+        debug!("send_message_direct response: {:?}", &response);
 
         true
     }
@@ -72,10 +79,12 @@ impl TelegramClient {
 impl Client for TelegramClient {
 
     async fn send_message(&self, chat_id: &str, data: &str) -> bool {
+        trace!("Client::send_message(chat_id: {}, data: ...)", chat_id);
         self.send_message_direct(SendMessageDto::new(chat_id, data, None)).await
     }
 
     fn subscribe(&mut self, tx: Sender<domain::client::Message>) {
+        trace!("Client::subscribe");
         self.tx = Some(tx);
     }
 }
@@ -83,6 +92,7 @@ impl Client for TelegramClient {
 #[async_trait]
 impl Worker for TelegramClient {
     async fn on_tick(&mut self) -> bool {
+        trace!("Worker::on_tick for {}", &self.name);
         let updates = match self.get_update().await {
             Ok(updates) => {
                 updates
@@ -92,6 +102,7 @@ impl Worker for TelegramClient {
                 return false;
             }
         };
+        debug!("{} updates received", updates.len());
 
         for update in updates {
             let (chat_id, data) = if let Some(msg) = update.message {
@@ -109,6 +120,7 @@ impl Worker for TelegramClient {
             let message = domain::client::Message::new(
                 self.get_name().to_string(), chat_id, data
             );
+            debug!("created message: {:?}", &message);
 
             if let Some(tx) = &self.tx {
                 if let Err(e) = tx.send(message).await {
@@ -121,10 +133,12 @@ impl Worker for TelegramClient {
     }
 
     fn get_name(&self) -> &str {
+        trace!("Worker::get_name for {}", &self.name);
         self.name.as_str()
     }
 
     fn interval(&self) -> i32 {
+        trace!("Worker::interval for {}", &self.name);
         5
     }
 }

@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Config {
     pub clients: Vec<ClientConfig>,
     pub servers: Vec<ServerConfig>
@@ -15,7 +15,7 @@ impl Config {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct ClientConfig {
     pub name: String,
     pub kind: String, // ex: telegram
@@ -32,7 +32,7 @@ impl ClientConfig {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct ServerConfig {
     pub name: String,
     pub proto: String,

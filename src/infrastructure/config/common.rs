@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 use tokio::fs;
-use crate::domain::config::{Config, ServerConfig};
+use crate::domain::config::Config;
 
 pub async fn init() {
     let directory_path = get_directory_path()

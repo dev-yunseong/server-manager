@@ -1,14 +1,16 @@
 use clap::{Parser, Subcommand};
+use log::{debug, trace};
 use crate::application::client::ClientLoader;
 use crate::application::handler::MessageHandler;
 use crate::infrastructure::cli::client::ClientCommands;
 use crate::infrastructure::cli::server::ServerCommands;
 use crate::infrastructure::client::{ClientManager, MessageAdapter};
 use crate::infrastructure::config::{ClientConfigAdapter, ServerConfigAdapter};
-use crate::infrastructure::handler::{EchoHandler, GeneralHandler};
+use crate::infrastructure::handler::GeneralHandler;
 use crate::infrastructure::server::{ConfigServerRepository, GeneralServerManager};
 
 #[derive(Parser)]
+#[derive(Debug)]
 pub struct Cli {
 
     #[command(subcommand)]
@@ -16,6 +18,7 @@ pub struct Cli {
 }
 
 #[derive(Subcommand)]
+#[derive(Debug)]
 pub enum Commands {
     Server {
         #[command(subcommand)]
@@ -30,18 +33,22 @@ pub enum Commands {
 
 impl Commands {
     pub async fn run(&self) {
+        trace!("command start: {:?}", &self);
         match self {
             Commands::Server { command } => {
+                debug!("server command");
                 let server_config = ServerConfigAdapter {};
                 let server_config = Box::new(server_config);
                 command.run(server_config).await
             },
             Commands::Client { command } => {
+                debug!("client command");
                 let client_config = ClientConfigAdapter {};
                 let client_config = Box::new(client_config);
                 command.run(client_config).await
             },
             Commands::Run => {
+                debug!("run command");
                 let mut client_loader = ClientManager::new();
                 client_loader.load_clients().await;
                 let mut rx = client_loader.run().await;
@@ -60,7 +67,9 @@ impl Commands {
                 });
                 println!("=== Run ===");
                 tokio::signal::ctrl_c().await.unwrap();
+                println!("=== Shutdown ===");
             }
         }
+        trace!("command end");
     }
 }

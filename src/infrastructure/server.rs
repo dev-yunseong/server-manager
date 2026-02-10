@@ -2,7 +2,6 @@ mod http_server_client;
 mod std_log_reader;
 
 use std::collections::HashMap;
-use std::iter::Map;
 use async_trait::async_trait;
 use crate::application::server::{ServerManager, ServerRepository};
 use crate::domain::server::{Health, Server};

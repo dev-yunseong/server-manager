@@ -1,4 +1,5 @@
 use clap::Subcommand;
+use log::{debug, trace};
 use crate::application::config::ServerConfigUseCase;
 use crate::domain::config::ServerConfig;
 use crate::domain::server::Server;
@@ -6,6 +7,7 @@ use crate::infrastructure::cli::util::{read_int, read_string, read_string_option
 use crate::infrastructure::config::ServerConfigAdapter;
 
 #[derive(Subcommand)]
+#[derive(Debug)]
 pub enum ServerCommands {
     Add,
     List
@@ -13,8 +15,10 @@ pub enum ServerCommands {
 
 impl ServerCommands {
     pub async fn run(&self, server_config_adapter: Box<dyn ServerConfigUseCase>) {
+        trace!("server command start: {:?}", &self);
         match self {
             ServerCommands::Add => {
+                debug!("add server");
                 println!("--- Add Server ---");
                 let name = read_string("name").await;
                 let proto = read_string("protocol").await;
@@ -23,13 +27,16 @@ impl ServerCommands {
                 let health_check_path = read_string_option("health check path").await;
                 let kill_path = read_string_option("kill path").await;
                 let log_command = read_string_option_allow_whitespace("log command").await;
-                
+
                 let config = ServerConfig::new(name, proto, host, port as i16, health_check_path, kill_path, log_command);
+                debug!("new server config: {:?}", &config);
                 server_config_adapter.add_server(config).await;
             },
             ServerCommands::List => {
+                debug!("list server");
                 let server_config_adapter = ServerConfigAdapter {};
                 let servers = server_config_adapter.list_server().await;
+                debug!("servers: {:?}", &servers);
 
                 println!("--- Server List ---");
 
@@ -56,5 +63,6 @@ impl ServerCommands {
                 }
             }
         }
+        trace!("server command end");
     }
 }

@@ -2,6 +2,7 @@ mod command;
 
 use async_trait::async_trait;
 use derive_new::new;
+use log::{debug, trace};
 use crate::application::client::MessageGateway;
 use crate::application::handler::MessageHandler;
 use crate::application::server::ServerManager;
@@ -16,6 +17,8 @@ pub struct EchoHandler {
 #[async_trait]
 impl MessageHandler for EchoHandler {
     async fn handle(&self, message: Message) {
+        trace!("EchoHandler::handle");
+        debug!("handling message: {:?}", &message);
         self.message_gateway
             .send_message(
                 message.client_name.as_str(),
@@ -34,14 +37,20 @@ pub struct GeneralHandler {
 #[async_trait]
 impl MessageHandler for GeneralHandler {
     async fn handle(&self, message: Message) {
+        trace!("GeneralHandler::handle");
+        debug!("handling message: {:?}", &message);
 
-        let response = match Command::parse(message.data) {
+        let command = Command::parse(message.data);
+        debug!("parsed command: {:?}", &command);
+
+        let response = match command {
             Command::Logs(name, n) => {
                 self.server_manager.logs(name.as_str(), n).await
                     .unwrap_or(String::from("Logs are not available."))
             },
             Command::Nothing => String::from("command is invalid")
         };
+        debug!("response: {}", &response);
 
         self.message_gateway
             .send_message(

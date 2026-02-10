@@ -1,5 +1,7 @@
+use log::{debug, trace};
 use crate::infrastructure::handler::command::Command::{Logs, Nothing};
 
+#[derive(Debug)]
 pub enum Command {
     Logs(String, i32),
     Nothing
@@ -7,14 +9,17 @@ pub enum Command {
 
 impl Command {
     pub fn parse(text: String) -> Self {
-        match text.split_whitespace().collect::<Vec<_>>()[..] {
+        trace!("Command::parse(text: {})", &text);
+        let command = match text.split_whitespace().collect::<Vec<_>>()[..] {
             ["/logs", name, n] => {
                 match n.parse() {
                     Ok(n) => Logs(name.to_string(), n),
-                    Err(_) => Nothing   
+                    Err(_) => Nothing
                 }
             },
             _ => Nothing
-        }
+        };
+        debug!("parsed command: {:?}", &command);
+        command
     }
 }

@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct SendMessageDto {
     chat_id: String,
     text: String,
@@ -8,7 +8,7 @@ pub struct SendMessageDto {
     reply_markup: Option<ReplyMarkup>
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct GetUpdateDto {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub offset: Option<i64>
@@ -22,12 +22,12 @@ impl GetUpdateDto {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct ReplyMarkup {
     pub inline_keyboard: Vec<InlineKeyboardButton>
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct InlineKeyboardButton {
     pub text: String,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -36,7 +36,7 @@ pub struct InlineKeyboardButton {
     pub callback_data: Option<String>
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 pub struct TelegramResponse<T> {
     pub ok: bool,
     pub result: T,
