@@ -12,4 +12,3 @@ pub trait ClientConfigUseCase {
     async fn add_client(&self, client_config: ClientConfig);
     async fn list_client(&self) -> Vec<ClientConfig>;
 }
-

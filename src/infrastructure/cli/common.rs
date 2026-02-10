@@ -5,7 +5,8 @@ use crate::infrastructure::cli::client::ClientCommands;
 use crate::infrastructure::cli::server::ServerCommands;
 use crate::infrastructure::client::{ClientManager, MessageAdapter};
 use crate::infrastructure::config::{ClientConfigAdapter, ServerConfigAdapter};
-use crate::infrastructure::handler::{EchoHandler};
+use crate::infrastructure::handler::{EchoHandler, GeneralHandler};
+use crate::infrastructure::server::{ConfigServerRepository, GeneralServerManager};
 
 #[derive(Parser)]
 pub struct Cli {
@@ -44,8 +45,11 @@ impl Commands {
                 let mut client_loader = ClientManager::new();
                 client_loader.load_clients().await;
                 let mut rx = client_loader.run().await;
-                let handler = EchoHandler::new(
-                    Box::new(MessageAdapter::new(Box::new(client_loader)))
+                let mut server_repository = ConfigServerRepository::new();
+                server_repository.load().await;
+                let handler = GeneralHandler::new(
+                    Box::new(MessageAdapter::new(Box::new(client_loader))),
+                    Box::new(GeneralServerManager::new(Box::new(server_repository)))
                 );
                 tokio::spawn(async move {
                     loop {
