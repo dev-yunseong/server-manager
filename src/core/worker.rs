@@ -72,7 +72,6 @@ mod tests {
     use dotenv::dotenv;
     use log::error;
     use crate::client::{Client, ClientKind};
-    use crate::core::*;
     use crate::core::config;
     use crate::core::config::{ClientConfig, Config};
     use crate::core::worker::WorkerRegistry;

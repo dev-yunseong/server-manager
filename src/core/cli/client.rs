@@ -1,5 +1,5 @@
 use clap::Subcommand;
-use crate::core::cli::common::{read_string, read_string_option};
+use crate::core::cli::util::{read_string, read_string_option};
 use crate::core::config::{add_client, read, ClientConfig};
 
 #[derive(Subcommand)]
