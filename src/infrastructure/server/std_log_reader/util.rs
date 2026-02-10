@@ -31,7 +31,14 @@ impl SystemCommandExecutor {
         }
 
         if output.status.success() {
-            Ok(String::from_utf8_lossy(&output.stdout).to_string())
+            let mut combined = String::from_utf8_lossy(&output.stdout).to_string();
+            let error_msg = String::from_utf8_lossy(&output.stderr);
+
+            if !error_msg.is_empty() {
+                combined.push_str("\n--- Error ---\n");
+                combined.push_str(&error_msg);
+            }
+            Ok(combined)
         } else {
             Err(std::io::Error::new(std::io::ErrorKind::Other, stderr_output.to_string()))
         }
