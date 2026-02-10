@@ -2,7 +2,7 @@ pub mod common;
 pub mod telegram;
 
 use std::collections::HashMap;
-use std::os::unix::raw::time_t;
+use async_trait::async_trait;
 use derive_new::new;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::Receiver;
@@ -13,13 +13,17 @@ use crate::domain::client::Message;
 use crate::infrastructure::{client, config};
 use crate::infrastructure::worker::WorkerRunner;
 
+#[derive(new)]
 pub struct MessageAdapter {
-
+    client_loader: Box<dyn ClientLoader>
 }
 
+#[async_trait]
 impl MessageGateway for MessageAdapter {
     async fn send_message(&self, client_name: &str, chat_id: &str, message: &str) {
-        todo!()
+        let client = self.client_loader.find(client_name)
+            .expect(format!("client({client_name}) is not available").as_str());
+        client.send_message(chat_id, message).await;
     }
 }
 
@@ -37,7 +41,7 @@ impl ClientManager {
     }
 }
 
-
+#[async_trait]
 impl ClientLoader for ClientManager {
     async fn load_clients(&mut self) {
         let clients = config::read().await.clients;
@@ -54,7 +58,7 @@ impl ClientLoader for ClientManager {
         }
     }
 
-    async fn find(&self, name: &str) -> Option<&Box<dyn Client>> {
+    fn find(&self, name: &str) -> Option<&Box<dyn Client>> {
         self.client_map.get(name)
     }
 

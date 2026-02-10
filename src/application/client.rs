@@ -1,16 +1,17 @@
-use std::ptr::addr_of_mut;
+use async_trait::async_trait;
 use tokio::sync::mpsc::Receiver;
 use crate::domain::client::Message;
 use crate::infrastructure::client::Client;
 
-pub trait MessageGateway {
+#[async_trait]
+pub trait MessageGateway : Send + Sync {
     async fn send_message(&self, client_name: &str, chat_id: &str, message: &str);
 }
 
 
-pub trait ClientLoader {
+#[async_trait]
+pub trait ClientLoader : Send + Sync {
     async fn load_clients(&mut self);
-    async fn find(&self, name: &str) -> Option<&Box<dyn Client>>;
+    fn find(&self, name: &str) -> Option<&Box<dyn Client>>;
     async fn run(&mut self)-> Receiver<Message>;
-    
 }

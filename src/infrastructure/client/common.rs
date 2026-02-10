@@ -8,7 +8,7 @@ use crate::domain::config::ClientConfig;
 use crate::infrastructure::client::telegram::TelegramClient;
 
 #[async_trait]
-pub trait Client : Worker + DynClone {
+pub trait Client : Worker + DynClone + Send + Sync {
     async fn send_message(&self, chat_id: &str, data: &str) -> bool;
     fn subscribe(&mut self, tx: Sender<Message>);
 }
