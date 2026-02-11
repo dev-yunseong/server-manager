@@ -3,9 +3,11 @@ use log::{debug, trace};
 use crate::application::client::ClientLoader;
 use crate::application::handler::MessageHandler;
 use crate::infrastructure::cli::client::ClientCommands;
+use crate::infrastructure::cli::password::PasswordCommands;
 use crate::infrastructure::cli::server::ServerCommands;
 use crate::infrastructure::client::{ClientManager, MessageAdapter};
 use crate::infrastructure::config::{ClientConfigAdapter, ServerConfigAdapter};
+use crate::infrastructure::config::auth::AuthAdapter;
 use crate::infrastructure::handler::GeneralHandler;
 use crate::infrastructure::server::{ConfigServerRepository, GeneralServerManager};
 
@@ -28,6 +30,10 @@ pub enum Commands {
         #[command(subcommand)]
         command: ClientCommands
     },
+    Password {
+        #[command(subcommand)]
+        command: PasswordCommands
+    },
     Run
 }
 
@@ -35,6 +41,10 @@ impl Commands {
     pub async fn run(&self) {
         trace!("command start: {:?}", &self);
         match self {
+            Commands::Password { command } => {
+                let auth_config = Box::new(AuthAdapter::new());
+                command.run(auth_config).await
+            }
             Commands::Server { command } => {
                 debug!("server command");
                 let server_config = ServerConfigAdapter {};
