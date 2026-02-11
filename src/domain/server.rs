@@ -50,6 +50,10 @@ impl Server {
 }
 
 pub enum Health {
-    Running, Dead, Drowning, Unknown
+    Healthy,
+    Unhealthy,
+    Deregistered, // Draining
+    Degraded,
+    Down,         // Dead
+    Unknown
 }
-

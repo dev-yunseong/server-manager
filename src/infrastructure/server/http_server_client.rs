@@ -47,8 +47,22 @@ impl HttpServerClient {
             .await;
 
         match response {
-            Ok(_) => Health::Running,
-            Err(_) => Health::Dead
+            Ok(res) => {
+                if res.status().is_success() {
+                    Health::Healthy
+                } else if res.status().is_server_error() {
+                    Health::Unhealthy
+                } else {
+                    Health::Degraded
+                }
+            }
+            Err(e) => {
+                if e.is_timeout() {
+                    Health::Unhealthy
+                } else {
+                    Health::Down
+                }
+            }
         }
     }
 }
