@@ -10,5 +10,6 @@ pub trait ServerRepository : Send + Sync {
 pub trait ServerManager : Send + Sync {
     async fn kill(&self, name: &str) -> bool;
     async fn healthcheck(&self, name: &str) -> Health;
+    async fn healthcheck_all(&self) -> Vec<(&str, Health)>;
     async fn logs(&self, name: &str, n: i32) -> Option<String>;
 }

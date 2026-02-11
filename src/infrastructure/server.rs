@@ -1,12 +1,15 @@
 mod http_server_client;
 mod std_log_reader;
+mod docker;
 pub mod util;
 
 use std::collections::HashMap;
 use async_trait::async_trait;
 use crate::application::server::{ServerManager, ServerRepository};
 use crate::domain::server::{health::Health, Server};
+use crate::domain::server::health::HealthCheckMethod;
 use crate::infrastructure::config;
+use crate::infrastructure::server::docker::DockerHealthChecker;
 use crate::infrastructure::server::http_server_client::HttpServerClient;
 use crate::infrastructure::server::std_log_reader::StdLogReader;
 
@@ -53,7 +56,8 @@ impl ServerRepository for ConfigServerRepository {
 pub struct GeneralServerManager {
     server_repository: Box<dyn ServerRepository>,
     http_server_client: HttpServerClient,
-    std_log_reader: StdLogReader
+    std_log_reader: StdLogReader,
+    docker_health_checker: DockerHealthChecker,
 }
 
 impl GeneralServerManager {
@@ -61,7 +65,8 @@ impl GeneralServerManager {
         Self {
             server_repository,
             http_server_client: HttpServerClient::new(),
-            std_log_reader: StdLogReader::new()
+            std_log_reader: StdLogReader::new(),
+            docker_health_checker: DockerHealthChecker::new(),
         }
     }
 }
@@ -83,7 +88,25 @@ impl ServerManager for GeneralServerManager {
             None => return Health::Unknown(format!("Fail to found server: '{}'", name))
         };
 
-        self.http_server_client.healthcheck(server).await
+        match server.health_check_method {
+            HealthCheckMethod::Http(_) => {
+                self.http_server_client.healthcheck(server).await
+            },
+            HealthCheckMethod::Docker => {
+                self.docker_health_checker.healthcheck(server).await
+            },
+            HealthCheckMethod::None => Health::Unknown(String::from("Health check is not available"))
+        }
+    }
+
+    async fn healthcheck_all(&self) -> Vec<(&str, Health)> {
+        let mut result = Vec::new();
+
+        for server  in self.server_repository.find_all() {
+            let health = self.healthcheck(server.name.as_str()).await;
+            result.push((server.name.as_str(), health));
+        }
+        result
     }
 
     async fn logs(&self, name: &str, n: i32) -> Option<String> {
