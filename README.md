@@ -64,6 +64,18 @@ Once the watchdog is running, you can interact with it through the configured me
   /logs my-web-server 100
   ```
 
+- `/health [server_name]`: Checks the health of the specified server. If no server name is provided, it will check all registered servers.
+
+  - `server_name` (optional): The name you assigned to the server during configuration.
+
+  Examples:
+  ```
+  /health my-web-server
+  ```
+  ```
+  /health
+  ```
+
 ### Running the Watchdog
 
 To start the server watchdog application:
