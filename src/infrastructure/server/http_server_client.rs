@@ -1,4 +1,4 @@
-use log::{error, info};
+use log::{debug, error, info};
 use reqwest::Client;
 use crate::domain::server::{health::Health, Server};
 
@@ -40,6 +40,7 @@ impl HttpServerClient {
             None => return Health::Unknown(String::from("Healthcheck path is undefined"))
         };
 
+        debug!("Health check url: {}", health_check_url);
         let response = self.client
             .get(health_check_url)
             .send()

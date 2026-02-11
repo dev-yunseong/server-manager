@@ -55,6 +55,17 @@ impl MessageHandler for GeneralHandler {
                 self.server_manager.logs(name.as_str(), n).await
                     .unwrap_or(String::from("Logs are not available."))
             },
+            Command::HealthCheck(name) => {
+                let health = self.server_manager.healthcheck(name.as_str()).await;
+                format!("===\nServer: {name}\n Health: {health}")
+            },
+            Command::HealthCheckAll => {
+                self.server_manager.healthcheck_all()
+                    .await
+                    .iter().map(|result|{format!("===\nServer: {}\nHealth: {}", result.0, result.1)})
+                    .collect::<Vec<String>>()
+                    .join("\n")
+            }
             Command::Nothing => String::from(INVALID_COMMAND_MESSAGE)
         };
         debug!("response: {}", &response);
