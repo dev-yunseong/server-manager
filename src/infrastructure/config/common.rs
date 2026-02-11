@@ -14,7 +14,7 @@ pub async fn init() {
     let config_path = directory_path.join("config.json");
 
     if !config_path.exists() {
-        let placeholder = Config::new();
+        let placeholder = Config::new(String::from("0000"));
         let placeholder = serde_json::to_string_pretty(&placeholder)
             .expect("Fail to serialize");
         fs::write(config_path, placeholder).await

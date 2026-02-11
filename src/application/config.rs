@@ -2,6 +2,12 @@ use async_trait::async_trait;
 use crate::domain::config::{ClientConfig, ServerConfig};
 
 #[async_trait]
+pub trait AuthUseCase {
+    async fn set_password(&self, password: String);
+    async fn validate_password(&mut self, password: String) -> bool;
+}
+
+#[async_trait]
 pub trait ServerConfigUseCase {
     async fn add_server(&self, server_config: ServerConfig);
     async fn list_server(&self) -> Vec<ServerConfig>;
