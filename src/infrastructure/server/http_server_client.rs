@@ -1,6 +1,6 @@
-use log::{error, info};
+use log::{debug, error, info};
 use reqwest::Client;
-use crate::domain::server::{Health, Server};
+use crate::domain::server::{health::Health, Server};
 
 pub struct HttpServerClient {
     client: Client
@@ -35,20 +35,34 @@ impl HttpServerClient {
     }
 
     pub async fn healthcheck(&self, server: &Server) -> Health {
-
         let health_check_url = match server.get_health_check_url() {
             Some(value) => value,
-            None => return Health::Unknown
+            None => return Health::Unknown(String::from("Healthcheck path is undefined"))
         };
 
+        debug!("Health check url: {}", health_check_url);
         let response = self.client
             .get(health_check_url)
             .send()
             .await;
 
         match response {
-            Ok(_) => Health::Running,
-            Err(_) => Health::Dead
+            Ok(res) => {
+                if res.status().is_success() {
+                    Health::Healthy
+                } else if res.status().is_server_error() {
+                    Health::Unhealthy
+                } else {
+                    Health::Degraded
+                }
+            }
+            Err(e) => {
+                if e.is_timeout() {
+                    Health::Unhealthy
+                } else {
+                    Health::Down
+                }
+            }
         }
     }
 }
