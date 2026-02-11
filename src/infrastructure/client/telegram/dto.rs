@@ -12,6 +12,7 @@ pub struct SendMessageDto {
 pub struct GetUpdateDto {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub offset: Option<i64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     timeout: Option<i32>,
 }
 
