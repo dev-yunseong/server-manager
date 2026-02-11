@@ -11,7 +11,7 @@ impl AuthAdapter {
         Self {
             password: None
         }
-    }    
+    }
 }
 
 #[async_trait]
@@ -23,13 +23,21 @@ impl AuthUseCase for AuthAdapter {
     }
 
     async fn validate_password(&mut self, password: String) -> bool {
-        match &self.password { 
+        match &self.password {
             Some(password) => password.eq(password.as_str()),
             None => {
                 let config = config::read().await;
                 self.password = Some(config.password);
                 self.password.as_ref().unwrap().as_str().eq(password.as_str())
             }
-        } 
+        }
+    }
+
+    async fn register(&self, client_name: String, identity: String) {
+        todo!()
+    }
+
+    async fn authenticate(&mut self, client_name: String, identity: String) -> bool {
+        todo!()
     }
 }

@@ -8,6 +8,7 @@ use crate::infrastructure::cli::server::ServerCommands;
 use crate::infrastructure::client::{ClientManager, MessageAdapter};
 use crate::infrastructure::config::{ClientConfigAdapter, ServerConfigAdapter};
 use crate::infrastructure::config::auth::AuthAdapter;
+use crate::infrastructure::handler::auth::AuthHandler;
 use crate::infrastructure::handler::GeneralHandler;
 use crate::infrastructure::server::{ConfigServerRepository, GeneralServerManager};
 
@@ -64,10 +65,19 @@ impl Commands {
                 let mut rx = client_loader.run().await;
                 let mut server_repository = ConfigServerRepository::new();
                 server_repository.load().await;
-                let handler = GeneralHandler::new(
+                let general_handler = GeneralHandler::new(
                     Box::new(MessageAdapter::new(Box::new(client_loader))),
                     Box::new(GeneralServerManager::new(Box::new(server_repository)))
                 );
+
+                let mut client_loader = ClientManager::new();
+                client_loader.load_clients().await;
+                let mut handler = AuthHandler::new(
+                    Box::new(MessageAdapter::new(Box::new(client_loader))),
+                    Box::new(general_handler),
+                    Box::new(AuthAdapter::new())
+                );
+                
                 tokio::spawn(async move {
                     loop {
                         if let Some(message) = rx.recv().await {

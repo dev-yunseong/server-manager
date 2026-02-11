@@ -1,4 +1,5 @@
 mod command;
+pub mod auth;
 
 use async_trait::async_trait;
 use derive_new::new;
@@ -23,7 +24,7 @@ pub struct EchoHandler {
 
 #[async_trait]
 impl MessageHandler for EchoHandler {
-    async fn handle(&self, message: Message) {
+    async fn handle(&mut self, message: Message) {
         trace!("EchoHandler::handle");
         debug!("handling message: {:?}", &message);
         self.message_gateway
@@ -43,7 +44,7 @@ pub struct GeneralHandler {
 
 #[async_trait]
 impl MessageHandler for GeneralHandler {
-    async fn handle(&self, message: Message) {
+    async fn handle(&mut self, message: Message) {
         trace!("GeneralHandler::handle");
         debug!("handling message: {:?}", &message);
 
