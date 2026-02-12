@@ -3,8 +3,7 @@ use async_trait::async_trait;
 use crate::application::config::AuthUseCase;
 use crate::domain::chat::{Chat, ChatList, ChatMap};
 use crate::domain::config::Config;
-use crate::infrastructure::common::file_accessor::{get_chat_list_file_accessor, FileAccessor};
-use crate::infrastructure::config::get_config_file_accessor;
+use crate::infrastructure::common::file_accessor::{get_chat_list_file_accessor, get_config_file_accessor, FileAccessor};
 
 pub struct AuthAdapter {
     password: Option<String>,

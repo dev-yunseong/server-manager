@@ -29,7 +29,7 @@ impl ClientCommands {
                     }
                 };
                 debug!("new client config: {:?}", &client);
-                client_config_use_case.add_client(client).await;
+                let _ = client_config_use_case.add_client(client).await;
             },
             ClientCommands::List => {
                 debug!("list client");
