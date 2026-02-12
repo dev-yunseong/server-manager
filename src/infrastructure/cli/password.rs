@@ -7,6 +7,7 @@ pub enum PasswordCommands {
     Set {
         password: String
     },
+    Clear
 }
 
 impl PasswordCommands {
@@ -15,7 +16,11 @@ impl PasswordCommands {
         match self {
             PasswordCommands::Set { password } => {
                 println!("Entered password: {}", password);
-                auth_use_case.set_password(password.clone()).await;
+                auth_use_case.set_password(Some(password.clone())).await;
+            },
+            PasswordCommands::Clear => {
+                auth_use_case.set_password(None).await;
+                println!("Password removed");
             }
         }
     }

@@ -49,9 +49,13 @@ impl AuthAdapter {
             None => return Err(anyhow!("Fail to find file path").into())
         };
 
-        let raw_json = fs::read_to_string(file_path).await?;
-        let chat_list = serde_json::from_str::<ChatList>(raw_json.as_str())?;
-        Ok(chat_list)
+        if file_path.exists() {
+            let raw_json = fs::read_to_string(file_path).await?;
+            let chat_list = serde_json::from_str::<ChatList>(raw_json.as_str())?;
+            Ok(chat_list)
+        } else {
+            Ok(ChatList { chats: Vec::new() })
+        }
     }
 
     async fn write(&self, chat_list: ChatList) {
@@ -67,9 +71,9 @@ impl AuthAdapter {
 
 #[async_trait]
 impl AuthUseCase for AuthAdapter {
-    async fn set_password(&self, password: String) {
+    async fn set_password(&self, password: Option<String>) {
         let mut config = config::read().await;
-        config.password = Some(password);
+        config.password = password;
         config::write(config).await;
     }
 
