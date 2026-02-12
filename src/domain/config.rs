@@ -2,13 +2,13 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Config {
-    pub password: String,
+    pub password: Option<String>,
     pub clients: Vec<ClientConfig>,
     pub servers: Vec<ServerConfig>
 }
 
 impl Config {
-    pub fn new(password: String) -> Self {
+    pub fn new(password: Option<String>) -> Self {
         Self {
             password,
             clients: Vec::new(),

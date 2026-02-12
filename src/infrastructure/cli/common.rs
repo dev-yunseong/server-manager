@@ -41,7 +41,9 @@ impl Commands {
         trace!("command start: {:?}", &self);
         match self {
             Commands::Password { command } => {
-                let auth_config = Box::new(AuthAdapter::new());
+                let mut auth_adapter = AuthAdapter::new();
+                auth_adapter.init().await;
+                let auth_config = Box::new(auth_adapter);
                 command.run(auth_config).await
             }
             Commands::Server { command } => {
@@ -61,12 +63,17 @@ impl Commands {
                 let mut client_loader = ClientManager::new();
                 client_loader.load_clients().await;
                 let mut rx = client_loader.run().await;
+
+                let mut auth_adapter = AuthAdapter::new();
+                auth_adapter.init().await;
+
                 let mut server_repository = ConfigServerRepository::new();
                 server_repository.load().await;
+
                 let mut handler = GeneralHandler::new(
                     Box::new(MessageAdapter::new(Box::new(client_loader))),
                     Box::new(GeneralServerManager::new(Box::new(server_repository))),
-                    Box::new(AuthAdapter::new())
+                    Box::new(auth_adapter)
                 );
 
                 tokio::spawn(async move {

@@ -23,6 +23,20 @@ impl AuthAdapter {
         }
     }
 
+    pub async fn init(&mut self) {
+        let config = config::read().await;
+        self.password = config.password;
+    }
+
+    async fn get_chat_map(&mut self) -> Result<&ChatMap, Box<dyn Error>> {
+        if self.chat_map.is_none() {
+            let list = self.read().await?;
+            self.chat_map = Some(ChatMap::from(list));
+        }
+
+        Ok(self.chat_map.as_ref().unwrap())
+    }
+
     fn get_file_path(&self) -> Option<PathBuf> {
         let mut path = get_directory_path()?;
         path.push(self.file_name.as_str());
@@ -55,19 +69,20 @@ impl AuthAdapter {
 impl AuthUseCase for AuthAdapter {
     async fn set_password(&self, password: String) {
         let mut config = config::read().await;
-        config.password = password;
+        config.password = Some(password);
         config::write(config).await;
     }
 
     async fn validate_password(&mut self, password: String) -> bool {
-        match &self.password {
-            Some(password) => password.eq(password.as_str()),
+        let config_password = match &self.password {
+            Some(password) => password,
             None => {
                 let config = config::read().await;
-                self.password = Some(config.password);
-                self.password.as_ref().unwrap().as_str().eq(password.as_str())
+                self.password = config.password;
+                self.password.as_ref().expect("Password is not defined").as_str()
             }
-        }
+        };
+        config_password.eq(password.as_str())
     }
 
     async fn register(&mut self, client_name: String, identity: String) -> Result<(), Box<dyn Error>> {
@@ -81,18 +96,15 @@ impl AuthUseCase for AuthAdapter {
     }
 
     async fn authenticate(&mut self, client_name: String, identity: String) -> bool {
-        let chat_map = match &self.chat_map {
-            Some(chat_map) => chat_map,
-            None => {
-                let list = match self.read().await {
-                    Ok(list) => list,
-                    Err(_) => return false
-                };
-                self.chat_map = Some(ChatMap::from(list));
-                self.chat_map.as_ref().unwrap()
-            }
+        let chat_map = match self.get_chat_map().await {
+            Ok(value) => value,
+            Err(_) => return false
         };
 
         chat_map.contains(client_name.as_str(), identity.as_str())
+    }
+
+    fn password_required(&self) -> bool {
+        self.password.is_some()
     }
 }

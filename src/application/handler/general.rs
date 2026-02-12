@@ -30,7 +30,9 @@ impl MessageHandler for GeneralHandler {
     async fn handle(&mut self, message: Message) {
         match message.data.split_whitespace().collect::<Vec<_>>()[..] {
             ["/register", password] => {
-                let response = if self.auth_use_case.validate_password(password.to_string()).await {
+                let response = if !self.auth_use_case.password_required() { 
+                        String::from("Password is not required")
+                } else if self.auth_use_case.validate_password(password.to_string()).await {
                     match self.auth_use_case.register(message.client_name.clone(), message.chat_id.clone()).await {
                         Ok(_) => String::from("Successfully registered."),
                         Err(e) => format!("Fail to register: {e}")
@@ -47,7 +49,7 @@ impl MessageHandler for GeneralHandler {
                     .await
             },
             _ => {
-                if (self.auth_use_case.authenticate(message.client_name.clone(), message.chat_id.clone()).await) {
+                if self.auth_use_case.password_required() &&self.auth_use_case.authenticate(message.client_name.clone(), message.chat_id.clone()).await {
                     self._handle(message).await
                 } else {
                     self.message_gateway.send_message(
