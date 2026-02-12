@@ -61,7 +61,7 @@ impl AuthAdapter {
     async fn write(&self, chat_list: ChatList) -> Result<(), Box<dyn Error>> {
         let raw_json = serde_json::to_string(&chat_list)?;
         let file_path = self.get_file_path()
-            .ok_or_else(|| anyhow!("Fail to find file path"))?;
+            .ok_or_else(|| anyhow!("Failed to find file path"))?;
         
         // Ensure directory exists before writing
         if let Some(parent) = file_path.parent() {
