@@ -1,15 +1,13 @@
 use clap::{Parser, Subcommand};
 use log::{debug, trace};
 use crate::application::client::ClientLoader;
-use crate::application::handler::MessageHandler;
+use crate::application::handler::{GeneralHandler, MessageHandler};
 use crate::infrastructure::cli::client::ClientCommands;
 use crate::infrastructure::cli::password::PasswordCommands;
 use crate::infrastructure::cli::server::ServerCommands;
 use crate::infrastructure::client::{ClientManager, MessageAdapter};
 use crate::infrastructure::config::{ClientConfigAdapter, ServerConfigAdapter};
 use crate::infrastructure::config::auth::AuthAdapter;
-use crate::infrastructure::handler::auth::AuthHandler;
-use crate::infrastructure::handler::GeneralHandler;
 use crate::infrastructure::server::{ConfigServerRepository, GeneralServerManager};
 
 #[derive(Parser)]
@@ -65,19 +63,12 @@ impl Commands {
                 let mut rx = client_loader.run().await;
                 let mut server_repository = ConfigServerRepository::new();
                 server_repository.load().await;
-                let general_handler = GeneralHandler::new(
+                let mut handler = GeneralHandler::new(
                     Box::new(MessageAdapter::new(Box::new(client_loader))),
-                    Box::new(GeneralServerManager::new(Box::new(server_repository)))
-                );
-
-                let mut client_loader = ClientManager::new();
-                client_loader.load_clients().await;
-                let mut handler = AuthHandler::new(
-                    Box::new(MessageAdapter::new(Box::new(client_loader))),
-                    Box::new(general_handler),
+                    Box::new(GeneralServerManager::new(Box::new(server_repository))),
                     Box::new(AuthAdapter::new())
                 );
-                
+
                 tokio::spawn(async move {
                     loop {
                         if let Some(message) = rx.recv().await {
