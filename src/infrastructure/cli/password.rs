@@ -15,7 +15,7 @@ impl PasswordCommands {
     pub async fn run(&self, auth_use_case: Box<dyn  AuthUseCase>) {
         match self {
             PasswordCommands::Set { password } => {
-                println!("Entered password: {}", password);
+                println!("Password set");
                 auth_use_case.set_password(Some(password.clone())).await;
             },
             PasswordCommands::Clear => {
