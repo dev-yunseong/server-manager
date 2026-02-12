@@ -58,14 +58,20 @@ impl AuthAdapter {
         }
     }
 
-    async fn write(&self, chat_list: ChatList) {
-        let raw_json = serde_json::to_string(&chat_list)
-            .expect("Fail to Serialize chat list");
-        fs::write(
-            self.get_file_path()
-                .expect("Fail to find file path"),
-            raw_json).await
-            .expect("Fail to write chat list");
+    async fn write(&self, chat_list: ChatList) -> Result<(), Box<dyn Error>> {
+        let raw_json = serde_json::to_string(&chat_list)?;
+        let file_path = self.get_file_path()
+            .ok_or_else(|| anyhow!("Failed to find file path"))?;
+        
+        // Ensure directory exists before writing
+        if let Some(parent) = file_path.parent() {
+            if !parent.exists() {
+                fs::create_dir_all(parent).await?;
+            }
+        }
+        
+        fs::write(file_path, raw_json).await?;
+        Ok(())
     }
 }
 
@@ -100,7 +106,7 @@ impl AuthUseCase for AuthAdapter {
         
         if !already_exists {
             chat_list.chats.push(Chat::new(client_name, identity));
-            self.write(chat_list).await;
+            self.write(chat_list).await?;
             self.chat_map = None;
         }
         
