@@ -1,9 +1,11 @@
 use std::collections::HashMap;
+use derive_new::new;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, new)]
 pub struct ChatList {
+    #[new(default)]
     pub chats: Vec<Chat>
 }
 

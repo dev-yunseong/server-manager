@@ -33,7 +33,8 @@ impl ClientCommands {
             },
             ClientCommands::List => {
                 debug!("list client");
-                let clients = client_config_use_case.list_client().await;
+                let clients = client_config_use_case.list_client().await
+                    .unwrap();
                 debug!("clients: {:?}", &clients);
                 println!("--- Client List ---");
                 if clients.is_empty() {

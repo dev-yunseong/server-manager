@@ -33,8 +33,9 @@ impl ServerCommands {
             },
             ServerCommands::List => {
                 debug!("list server");
-                let server_config_adapter = ServerConfigAdapter {};
-                let servers = server_config_adapter.list_server().await;
+                let server_config_adapter = ServerConfigAdapter::new();
+                let servers = server_config_adapter.list_server().await
+                    .unwrap();
                 debug!("servers: {:?}", &servers);
 
                 println!("--- Server List ---");

@@ -48,13 +48,13 @@ impl Commands {
             }
             Commands::Server { command } => {
                 debug!("server command");
-                let server_config = ServerConfigAdapter {};
+                let server_config = ServerConfigAdapter::new();
                 let server_config = Box::new(server_config);
                 command.run(server_config).await
             },
             Commands::Client { command } => {
                 debug!("client command");
-                let client_config = ClientConfigAdapter {};
+                let client_config = ClientConfigAdapter::new();
                 let client_config = Box::new(client_config);
                 command.run(client_config).await
             },

@@ -6,28 +6,32 @@ pub mod util;
 use std::collections::HashMap;
 use async_trait::async_trait;
 use crate::application::server::{ServerManager, ServerRepository};
+use crate::domain::config::Config;
 use crate::domain::server::{health::Health, Server};
 use crate::domain::server::health::HealthCheckMethod;
+use crate::infrastructure::common::file_accessor::{get_config_file_accessor, FileAccessor};
 use crate::infrastructure::config;
 use crate::infrastructure::server::docker::DockerHealthChecker;
 use crate::infrastructure::server::http_server_client::HttpServerClient;
 use crate::infrastructure::server::std_log_reader::StdLogReader;
 
 pub struct ConfigServerRepository {
-    servers: HashMap<String, Server>
+    servers: HashMap<String, Server>,
+    config_file_accessor: FileAccessor<Config>
 }
 
 impl ConfigServerRepository {
     
     pub fn new() -> Self {
         Self {
-            servers: HashMap::new()
+            servers: HashMap::new(),
+            config_file_accessor: get_config_file_accessor()
         }
     }
     
     pub async fn load(&mut self) {
         
-        let config = config::read().await;
+        let config = self.config_file_accessor.read().await.unwrap();
         let servers: Vec<Server> = config.servers
             .into_iter()
             .map(|config| { Server::from(config) })

@@ -2,6 +2,7 @@ pub mod common;
 pub mod telegram;
 
 use std::collections::HashMap;
+use std::error::Error;
 use async_trait::async_trait;
 use derive_new::new;
 use tokio::sync::mpsc;
@@ -10,8 +11,10 @@ pub use common::*;
 use crate::application::client::{ClientLoader, MessageGateway};
 use crate::application::worker::Worker;
 use crate::domain::client::Message;
-use crate::infrastructure::{client, config};
+use crate::infrastructure::{client};
 use crate::application::worker::WorkerRunner;
+use crate::domain::config::Config;
+use crate::infrastructure::common::file_accessor::{get_config_file_accessor, FileAccessor};
 
 #[derive(new)]
 pub struct MessageAdapter {
@@ -42,22 +45,24 @@ impl MessageGateway for MessageAdapter {
 
 pub struct ClientManager {
     worker_runner: WorkerRunner,
-    client_map: HashMap<String, Box<dyn Client>>
+    client_map: HashMap<String, Box<dyn Client>>,
+    config_file_accessor: FileAccessor<Config>
 }
 
 impl ClientManager {
     pub fn new() -> Self {
         Self {
             worker_runner: WorkerRunner::new(),
-            client_map: HashMap::new()
+            client_map: HashMap::new(),
+            config_file_accessor: get_config_file_accessor()
         }
     }
 }
 
 #[async_trait]
 impl ClientLoader for ClientManager {
-    async fn load_clients(&mut self) {
-        let clients = config::read().await.clients;
+    async fn load_clients(&mut self) -> Result<(), Box<dyn Error>> {
+        let clients = self.config_file_accessor.read().await?.clients;
         let clients: Vec<Box<dyn Client>> = clients.into_iter()
             .map(|client_config| {client::from(client_config)})
             .filter(|option|{option.is_some()})
@@ -69,6 +74,7 @@ impl ClientLoader for ClientManager {
         for client in clients.into_iter() {
             self.client_map.insert(client.get_name().to_string(), client);
         }
+        Ok(())
     }
 
     fn find(&self, name: &str) -> Option<&Box<dyn Client>> {

@@ -179,7 +179,7 @@ mod tests {
 
     #[async_trait]
     impl AuthUseCase for MockAuthUseCase {
-        async fn set_password(&self, _password: Option<String>) {}
+        async fn set_password(&self, password: Option<String>) -> Result<(), Box<dyn Error>> {Ok(())}
 
         async fn validate_password(&mut self, password: String) -> bool {
             match &self.password {
