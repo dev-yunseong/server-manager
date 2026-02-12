@@ -3,10 +3,11 @@ use log::{debug, trace};
 use crate::application::client::ClientLoader;
 use crate::application::handler::{GeneralHandler, MessageHandler};
 use crate::infrastructure::cli::client::ClientCommands;
+use crate::infrastructure::cli::event::EventCommands;
 use crate::infrastructure::cli::password::PasswordCommands;
 use crate::infrastructure::cli::server::ServerCommands;
 use crate::infrastructure::client::{ClientManager, MessageAdapter};
-use crate::infrastructure::config::{ClientConfigAdapter, ServerConfigAdapter};
+use crate::infrastructure::config::{ClientConfigAdapter, EventConfigAdapter, ServerConfigAdapter};
 use crate::infrastructure::config::auth::AuthAdapter;
 use crate::infrastructure::server::{ConfigServerRepository, GeneralServerManager};
 
@@ -33,6 +34,10 @@ pub enum Commands {
         #[command(subcommand)]
         command: PasswordCommands
     },
+    Event {
+        #[command(subcommand)]
+        command: EventCommands
+    },
     Run
 }
 
@@ -58,10 +63,16 @@ impl Commands {
                 let client_config = Box::new(client_config);
                 command.run(client_config).await
             },
+            Commands::Event { command } => {
+                debug!("event command");
+                let event_config = EventConfigAdapter::new();
+                let event_config = Box::new(event_config);
+                command.run(event_config).await
+            },
             Commands::Run => {
                 debug!("run command");
                 let mut client_loader = ClientManager::new();
-                client_loader.load_clients().await;
+                let _ = client_loader.load_clients().await;
                 let mut rx = client_loader.run().await;
 
                 let mut auth_adapter = AuthAdapter::new();
