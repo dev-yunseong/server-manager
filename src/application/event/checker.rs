@@ -58,14 +58,16 @@ impl EventChecker for HealthEventChecker {
     fn check(&self, event_kind: EventKind, server_manager: Arc<dyn ServerManager>, tx: Sender<EventMessage>) {
         if let EventKind::Health { server_name, keyword } = event_kind {
             tokio::spawn(async move {
-                let health = server_manager.healthcheck(server_name.as_str()).await;
-                if health.to_string().contains(keyword.as_str()) {
-                    let _ = tx.send(EventMessage {
-                        event_name: server_name.clone(),
-                        text: format!("Keyword '{}' found in health check of server '{}'", keyword, server_name),
-                    }).await;
+                loop {
+                    let health = server_manager.healthcheck(server_name.as_str()).await;
+                    if health.to_string().contains(keyword.as_str()) {
+                        let _ = tx.send(EventMessage {
+                            event_name: server_name.clone(),
+                            text: format!("Keyword '{}' found in health check of server '{}'", keyword, server_name),
+                        }).await;
+                    }
+                    tokio::time::sleep(Duration::from_secs(30)).await;
                 }
-                tokio::time::sleep(Duration::from_secs(30))
             });
         }
     }
