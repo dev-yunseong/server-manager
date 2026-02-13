@@ -116,6 +116,6 @@ impl ServerManager for GeneralServerManager {
 
     async fn logs_stream(&self, name: &str) -> Option<Box<dyn Stream<Item=String> + Send>> {
         let server = self.server_repository.find(name)?;
-        self.std_log_reader.read_follow(server).await.map(|s| s.into_box())
+        self.std_log_reader.read_follow(server).await
     }
 }

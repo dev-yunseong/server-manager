@@ -15,12 +15,6 @@ impl ChildProcessStream {
     pub(crate) fn new(stream: Pin<Box<dyn Stream<Item = String> + Send + Sync>>, child: Child) -> Self {
         Self { child, stream }
     }
-
-    /// Converts this stream into a boxed trait object.
-    /// This is a convenience method to avoid verbose casting at call sites.
-    pub fn into_box(self) -> Box<dyn Stream<Item = String> + Send + Sync> {
-        Box::new(self)
-    }
 }
 
 impl Stream for ChildProcessStream {
