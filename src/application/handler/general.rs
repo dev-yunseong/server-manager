@@ -18,10 +18,14 @@ Available commands:
 - /health (server_name)
   (server_name): optional. If provided, returns the health status of the specified server."#;
 
+use std::sync::Arc;
+
+//...
+
 #[derive(new)]
 pub struct GeneralHandler {
-    pub message_gateway: Box<dyn MessageGateway>,
-    pub server_manager: Box<dyn ServerManager>,
+    pub message_gateway: Arc<dyn MessageGateway>,
+    pub server_manager: Arc<dyn ServerManager>,
     pub auth_use_case: Box<dyn AuthUseCase>,
     pub event_subscribe_use_case: Box<dyn EventSubscribeUseCase>,
 }

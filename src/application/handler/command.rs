@@ -2,13 +2,14 @@ mod alarm;
 
 use std::error::Error;
 use anyhow::anyhow;
-use clap::command;
+use async_trait::async_trait;
 use log::{debug, trace};
 use crate::application::handler::command::alarm::AlarmCommand;
 use crate::application::handler::command::Command::{Alarm, HealthCheck, HealthCheckAll, Logs, Nothing};
 use crate::application::handler::GeneralHandler;
 use crate::domain::client::Message;
 
+#[async_trait]
 pub trait Run: Send + Sync {
     async fn run(&self, handler: &mut GeneralHandler, id: String, message: &Message) -> Result<String, Box<dyn Error + Send + Sync>>;
 }
@@ -22,6 +23,7 @@ pub enum Command {
     Alarm(AlarmCommand)
 }
 
+#[async_trait]
 impl Run for Command {
     async fn run(&self, handler: &mut GeneralHandler, id: String, message: &Message) -> Result<String, Box<dyn Error + Send + Sync>> {
         match self {

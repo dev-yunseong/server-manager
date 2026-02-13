@@ -3,6 +3,7 @@ pub mod telegram;
 
 use std::collections::HashMap;
 use std::error::Error;
+use std::sync::{Arc, Mutex};
 use async_trait::async_trait;
 use derive_new::new;
 use tokio::sync::mpsc;
@@ -14,11 +15,11 @@ use crate::domain::client::Message;
 use crate::infrastructure::{client};
 use crate::application::worker::WorkerRunner;
 use crate::domain::config::Config;
-use crate::infrastructure::common::file_accessor::{get_config_file_accessor, FileAccessor};
+use crate::domain::file_accessor::FileAccessor;
 
-#[derive(new)]
+#[derive(new, Clone)]
 pub struct MessageAdapter {
-    client_loader: Box<dyn ClientLoader>
+    client_loader: Arc<dyn ClientLoader>
 }
 
 #[async_trait]
@@ -43,21 +44,13 @@ impl MessageGateway for MessageAdapter {
     }
 }
 
+#[derive(Clone, new)]
 pub struct ClientManager {
-    worker_runner: WorkerRunner,
-    client_map: HashMap<String, Box<dyn Client>>,
-    config_file_accessor: FileAccessor<Config>
+    worker_runner: Arc<Mutex<WorkerRunner>>,
+    client_map: Arc<Mutex<HashMap<String, Box<dyn Client>>>>,
+    config_file_accessor: Arc<dyn FileAccessor<Config>>
 }
 
-impl ClientManager {
-    pub fn new() -> Self {
-        Self {
-            worker_runner: WorkerRunner::new(),
-            client_map: HashMap::new(),
-            config_file_accessor: get_config_file_accessor()
-        }
-    }
-}
 
 #[async_trait]
 impl ClientLoader for ClientManager {
@@ -69,21 +62,23 @@ impl ClientLoader for ClientManager {
             .map(|client| { client.unwrap() })
             .collect();
 
-        self.client_map.clear();
+        let mut client_map = self.client_map.lock().unwrap();
+        client_map.clear();
 
         for client in clients.into_iter() {
-            self.client_map.insert(client.get_name().to_string(), client);
+            client_map.insert(client.get_name().to_string(), client);
         }
         Ok(())
     }
 
-    fn find(&self, name: &str) -> Option<&Box<dyn Client>> {
-        self.client_map.get(name)
+    fn find(&self, name: &str) -> Option<Box<dyn Client>> {
+        let client_map = self.client_map.lock().unwrap();
+        client_map.get(name).map(|c| dyn_clone::clone_box(&**c))
     }
 
     async fn run(&mut self) -> Receiver<Message> {
         let (tx, rx) = mpsc::channel(16);
-        let mut clients: Vec<Box<dyn Client>> = self.client_map
+        let mut clients: Vec<Box<dyn Client>> = self.client_map.lock().unwrap()
             .values()
             .map(|c| dyn_clone::clone_box(&**c))
             .collect();
@@ -98,7 +93,7 @@ impl ClientLoader for ClientManager {
             .map(|c| c as Box<dyn Worker>)
             .collect();
 
-        self.worker_runner.run_batch(workers);
+        self.worker_runner.lock().unwrap().run_batch(workers);
 
         rx
     }

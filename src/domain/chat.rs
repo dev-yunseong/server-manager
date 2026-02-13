@@ -3,13 +3,13 @@ use derive_new::new;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-#[derive(Serialize, Deserialize, new)]
+#[derive(Serialize, Deserialize, new, Clone)]
 pub struct ChatList {
     #[new(default)]
     pub chats: Vec<Chat>
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct Chat {
     pub id: String,
     pub client_name: String,

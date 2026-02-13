@@ -4,7 +4,6 @@ use crate::application::config::ServerConfigUseCase;
 use crate::domain::config::ServerConfig;
 use crate::domain::server::Server;
 use crate::infrastructure::cli::util::{read_string, read_string_option, FormatChecker};
-use crate::infrastructure::config::ServerConfigAdapter;
 
 #[derive(Subcommand)]
 #[derive(Debug)]
@@ -33,7 +32,7 @@ impl ServerCommands {
             },
             ServerCommands::List => {
                 debug!("list server");
-                let server_config_adapter = ServerConfigAdapter::new();
+
                 let servers: Vec<ServerConfig> = server_config_adapter.list_server().await
                     .unwrap();
                 debug!("servers: {:?}", &servers);

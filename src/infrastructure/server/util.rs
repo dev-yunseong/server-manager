@@ -1,6 +1,10 @@
+use std::process::Stdio;
 use derive_new::new;
 use log::warn;
+use tokio::io::{AsyncBufReadExt, BufReader};
+use tokio_stream::wrappers::LinesStream;
 use tokio::process::Command;
+use tokio_stream::{Stream, StreamExt};
 
 #[derive(new)]
 pub struct SystemCommandExecutor;
@@ -42,5 +46,25 @@ impl SystemCommandExecutor {
         } else {
             Err(std::io::Error::new(std::io::ErrorKind::Other, stderr_output.to_string()))
         }
+    }
+
+    pub async fn capture_output_follow(&self, cmd: &str, args: &[&str]) -> Result<Box<dyn Stream<Item = String> + Send + Sync>, std::io::Error> {
+        let mut child = Command::new(cmd)
+            .args(args)
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped()) // 일단 둘 다 파이프로 연결
+            .spawn()?;
+
+        let stdout = child.stdout.take().unwrap();
+        let stderr = child.stderr.take().unwrap();
+
+        let stdout_stream = LinesStream::new(BufReader::new(stdout).lines())
+            .map(|res| res.unwrap_or_else(|e| format!("stdout error: {}", e)));
+        let stderr_stream = LinesStream::new(BufReader::new(stderr).lines())
+            .map(|res| res.unwrap_or_else(|e| format!("stderr error: {}", e)));
+
+        let combined_stream = stdout_stream.merge(stderr_stream);
+
+        Ok(Box::new(combined_stream))
     }
 }

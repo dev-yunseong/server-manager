@@ -1,5 +1,6 @@
 use std::error::Error;
 use std::path::PathBuf;
+use std::sync::Arc;
 use anyhow::anyhow;
 use derive_new::new;
 use serde::{Serialize};
@@ -7,20 +8,23 @@ use serde::de::DeserializeOwned;
 use tokio::fs;
 use crate::domain::chat::ChatList;
 use crate::domain::config::{Config, EventSubscribeList};
+use crate::domain::file_accessor::FileAccessor;
+use async_trait::async_trait;
 
-#[derive(new)]
-pub struct FileAccessor<T>
-    where T: DeserializeOwned + Serialize
+#[derive(new, Clone)]
+pub struct JsonFileAccessor<T>
+    where T: DeserializeOwned + Serialize + Send
 {
     file_name: String,
-    factory: Box<dyn Fn() -> T + Send + Sync>,
+    factory: Arc<dyn Fn() -> T + Send + Sync>,
 }
 
-impl<T> FileAccessor<T>
+#[async_trait]
+impl<T> FileAccessor<T> for JsonFileAccessor<T>
 where
-    T: Serialize + DeserializeOwned
+    T: Serialize + DeserializeOwned + Send + Sync + Clone
 {
-    pub async fn read(&self)
+    async fn read(&self)
         -> Result<T, Box<dyn Error + Send + Sync>>
     {
         let file_path = self.get_file_path()?;
@@ -33,9 +37,9 @@ where
         }
     }
 
-    pub async fn write(&self, data: T)
+    async fn write(&self, data: &T)
         -> Result<(), Box<dyn Error + Send + Sync>> {
-        let raw_json = serde_json::to_string_pretty(&data)?;
+        let raw_json = serde_json::to_string_pretty(data)?;
 
         let directory_path = self.get_directory_path()?;
 
@@ -51,7 +55,9 @@ where
 
         Ok(())
     }
+}
 
+impl<T> JsonFileAccessor<T> where T: Serialize + DeserializeOwned + Send {
     fn get_file_path(&self)
         -> Result<PathBuf, Box<dyn Error + Send + Sync>> {
         let mut path = self.get_directory_path()?;
@@ -67,23 +73,23 @@ where
     }
 }
 
-pub fn get_chat_list_file_accessor() -> FileAccessor<ChatList> {
-    FileAccessor::new(
+pub fn get_chat_list_file_accessor() -> JsonFileAccessor<ChatList> {
+    JsonFileAccessor::new(
         String::from("chat_list.json"),
-        Box::new(|| { ChatList::new() })
+        Arc::new(|| { ChatList::new() })
     )
 }
 
-pub fn get_config_file_accessor() -> FileAccessor<Config> {
-    FileAccessor::new(
+pub fn get_config_file_accessor() -> JsonFileAccessor<Config> {
+    JsonFileAccessor::new(
         String::from("config.json"),
-        Box::new(||{Config::new(None)})
+        Arc::new(||{Config::new(None)})
     )
 }
 
-pub fn get_event_subscribe_file_accessor() -> FileAccessor<EventSubscribeList> {
-    FileAccessor::new(
+pub fn get_event_subscribe_file_accessor() -> JsonFileAccessor<EventSubscribeList> {
+    JsonFileAccessor::new(
         String::from("subscribe.json"),
-        Box::new(||{EventSubscribeList::new()})
+        Arc::new(||{EventSubscribeList::new()})
     )
 }

@@ -1,19 +1,14 @@
 use std::error::Error;
+use std::sync::Arc;
 use async_trait::async_trait;
+use derive_new::new;
 use crate::application::config::ClientConfigUseCase;
 use crate::domain::config::{ClientConfig, Config};
-use crate::infrastructure::common::file_accessor::{get_config_file_accessor, FileAccessor};
+use crate::domain::file_accessor::FileAccessor;
 
+#[derive(new)]
 pub struct ClientConfigAdapter {
-    config_file_accessor: FileAccessor<Config>
-}
-
-impl ClientConfigAdapter {
-    pub fn new() -> Self {
-        Self {
-            config_file_accessor: get_config_file_accessor()
-        }
-    }
+    config_file_accessor: Arc<dyn FileAccessor<Config> + Send + Sync>
 }
 
 #[async_trait]
@@ -21,7 +16,7 @@ impl ClientConfigUseCase for ClientConfigAdapter {
     async fn add_client(&self, client_config: ClientConfig) -> Result<(), Box<dyn Error + Send + Sync>> {
         let mut config = self.config_file_accessor.read().await?;
         config.clients.push(client_config);
-        self.config_file_accessor.write(config).await?;
+        self.config_file_accessor.write(&config).await?;
         Ok(())
     }
 

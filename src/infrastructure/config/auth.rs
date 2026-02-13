@@ -1,24 +1,28 @@
 use std::error::Error;
+use std::sync::Arc;
 use async_trait::async_trait;
 use crate::application::config::AuthUseCase;
 use crate::domain::chat::{Chat, ChatList, ChatMap};
 use crate::domain::config::Config;
-use crate::infrastructure::common::file_accessor::{get_chat_list_file_accessor, get_config_file_accessor, FileAccessor};
+use crate::domain::file_accessor::FileAccessor;
 
 pub struct AuthAdapter {
     password: Option<String>,
     chat_map: Option<ChatMap>,
-    config_file_accessor: FileAccessor<Config>,
-    chat_list_file_accessor: FileAccessor<ChatList>
+    config_file_accessor: Arc<dyn FileAccessor<Config> + Send + Sync>,
+    chat_list_file_accessor: Arc<dyn FileAccessor<ChatList> + Send + Sync>
 }
 
 impl AuthAdapter {
-    pub fn new() -> Self {
+    pub fn new(
+        config_file_accessor: Arc<dyn FileAccessor<Config> + Send + Sync>,
+        chat_list_file_accessor: Arc<dyn FileAccessor<ChatList> + Send + Sync>
+    ) -> Self {
         Self {
             password: None,
             chat_map: None,
-            config_file_accessor: get_config_file_accessor(),
-            chat_list_file_accessor: get_chat_list_file_accessor()
+            config_file_accessor,
+            chat_list_file_accessor
         }
     }
 
@@ -43,7 +47,7 @@ impl AuthUseCase for AuthAdapter {
     async fn set_password(&self, password: Option<String>) -> Result<(), Box<dyn Error + Send + Sync>> {
         let mut config = self.config_file_accessor.read().await?;
         config.password = password;
-        self.config_file_accessor.write(config).await?;
+        self.config_file_accessor.write(&config).await?;
         Ok(())
     }
 
@@ -63,7 +67,7 @@ impl AuthUseCase for AuthAdapter {
         
         if !already_exists {
             chat_list.chats.push(Chat::new(client_name, identity));
-            self.chat_list_file_accessor.write(chat_list).await?;
+            self.chat_list_file_accessor.write(&chat_list).await?;
             self.chat_map = None;
         }
         

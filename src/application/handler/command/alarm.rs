@@ -1,4 +1,5 @@
 use std::error::Error;
+use async_trait::async_trait;
 use crate::application::handler::command::Run;
 use crate::application::handler::GeneralHandler;
 use crate::domain::client::Message;
@@ -11,8 +12,9 @@ pub enum AlarmCommand {
     List
 }
 
+#[async_trait]
 impl Run for AlarmCommand {
-    async fn run(&self, handler: &mut GeneralHandler, id: String, message: &Message) -> Result<String, Box<dyn Error + Send + Sync>> {
+    async fn run(&self, handler: &mut GeneralHandler, id: String, _message: &Message) -> Result<String, Box<dyn Error + Send + Sync>> {
         match self {
             AlarmCommand::Add(event_name) => {
                 let _ = handler.event_subscribe_use_case

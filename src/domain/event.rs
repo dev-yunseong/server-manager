@@ -1,6 +1,6 @@
 use crate::domain::config::EventConfig;
 
-pub struct  Event {
+pub struct Event {
     pub name: String,
     pub event_kind: EventKind
 }

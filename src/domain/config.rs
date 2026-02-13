@@ -8,7 +8,7 @@ pub use event::*;
 pub use client::*;
 pub use server::*;
 
-#[derive(Serialize, Deserialize, Debug, new)]
+#[derive(Serialize, Deserialize, Debug, new, Clone)]
 pub struct Config {
     pub password: Option<String>,
     #[new(default)]

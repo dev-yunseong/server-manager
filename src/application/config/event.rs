@@ -3,7 +3,7 @@ use async_trait::async_trait;
 use crate::domain::config::EventConfig;
 
 #[async_trait]
-pub trait EventConfigUseCase {
+pub trait EventConfigUseCase: Send + Sync {
     async fn add_event(&self, event_config: EventConfig) -> Result<(), Box<dyn Error + Send + Sync>>;
     async fn list_event(&self) -> Result<Vec<EventConfig>, Box<dyn Error + Send + Sync>>;
     async fn remove_event(&self, name: String) -> Result<(), Box<dyn Error + Send + Sync>>;

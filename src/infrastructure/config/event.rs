@@ -1,21 +1,15 @@
 use std::error::Error;
+use std::sync::Arc;
 use async_trait::async_trait;
+use derive_new::new;
 use crate::application::config::{EventConfigUseCase, EventSubscribeUseCase};
 use crate::domain::config::{Config, EventConfig, EventSubscribe, EventSubscribeList};
-use crate::infrastructure::common::file_accessor::{get_config_file_accessor, get_event_subscribe_file_accessor, FileAccessor};
+use crate::domain::file_accessor::FileAccessor;
 
+#[derive(new)]
 pub struct EventConfigAdapter {
-    config_file_accessor: FileAccessor<Config>,
-    subscribe_file_accessor: FileAccessor<EventSubscribeList>,
-}
-
-impl EventConfigAdapter {
-    pub fn new() -> Self {
-        Self {
-            config_file_accessor: get_config_file_accessor(),
-            subscribe_file_accessor: get_event_subscribe_file_accessor(),
-        }
-    }
+    config_file_accessor: Arc<dyn FileAccessor<Config>>,
+    subscribe_file_accessor: Arc<dyn FileAccessor<EventSubscribeList>>,
 }
 
 #[async_trait]
@@ -23,7 +17,7 @@ impl EventConfigUseCase for EventConfigAdapter {
     async fn add_event(&self, event_config: EventConfig) -> Result<(), Box<dyn Error + Send + Sync>> {
         let mut config = self.config_file_accessor.read().await?;
         config.events.push(event_config);
-        self.config_file_accessor.write(config).await?;
+        self.config_file_accessor.write(&config).await?;
         Ok(())
     }
 
@@ -35,7 +29,7 @@ impl EventConfigUseCase for EventConfigAdapter {
     async fn remove_event(&self, name: String) -> Result<(), Box<dyn Error + Send + Sync>> {
         let mut config = self.config_file_accessor.read().await?;
         config.events.retain(|event| event.name != name);
-        self.config_file_accessor.write(config).await?;
+        self.config_file_accessor.write(&config).await?;
         Ok(())
     }
 }
@@ -65,7 +59,7 @@ impl EventSubscribeUseCase for EventConfigAdapter {
             }
         }
 
-        let _ = self.subscribe_file_accessor.write(subscribe_file).await?;
+        let _ = self.subscribe_file_accessor.write(&subscribe_file).await?;
         Ok(())
     }
 
@@ -84,7 +78,7 @@ impl EventSubscribeUseCase for EventConfigAdapter {
     async fn unsubscribe(&self, chat_id: String, event_name: String) -> Result<(), Box<dyn Error + Send + Sync>> {
         let mut subscribe_file: EventSubscribeList = self.subscribe_file_accessor.read().await?;
         subscribe_file.unsubscribe(event_name.as_str(), chat_id.as_str());
-        let _ = self.subscribe_file_accessor.write(subscribe_file).await?;
+        let _ = self.subscribe_file_accessor.write(&subscribe_file).await?;
 
         Ok(())
     }
