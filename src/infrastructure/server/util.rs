@@ -11,13 +11,13 @@ use tokio_stream::{Stream, StreamExt};
 /// Wrapper struct that keeps the child process alive for the lifetime of the stream
 /// and ensures proper cleanup when the stream is dropped.
 pub struct ChildProcessStream {
-    stream: Pin<Box<dyn Stream<Item = String> + Send + Sync>>,
     child: Child,
+    stream: Pin<Box<dyn Stream<Item = String> + Send + Sync>>,
 }
 
 impl ChildProcessStream {
     fn new(stream: Pin<Box<dyn Stream<Item = String> + Send + Sync>>, child: Child) -> Self {
-        Self { stream, child }
+        Self { child, stream }
     }
 }
 
@@ -32,7 +32,9 @@ impl Stream for ChildProcessStream {
 impl Drop for ChildProcessStream {
     fn drop(&mut self) {
         // Attempt to kill the child process when the stream is dropped
-        let _ = self.child.start_kill();
+        if let Err(e) = self.child.start_kill() {
+            warn!("Failed to kill child process during stream cleanup: {}", e);
+        }
     }
 }
 
