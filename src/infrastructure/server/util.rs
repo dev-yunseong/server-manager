@@ -1,10 +1,40 @@
 use std::process::Stdio;
+use std::pin::Pin;
+use std::task::{Context, Poll};
 use derive_new::new;
 use log::warn;
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio_stream::wrappers::LinesStream;
-use tokio::process::Command;
+use tokio::process::{Child, Command};
 use tokio_stream::{Stream, StreamExt};
+
+/// Wrapper struct that keeps the child process alive for the lifetime of the stream
+/// and ensures proper cleanup when the stream is dropped.
+pub struct ChildProcessStream {
+    stream: Pin<Box<dyn Stream<Item = String> + Send + Sync>>,
+    child: Child,
+}
+
+impl ChildProcessStream {
+    fn new(stream: Pin<Box<dyn Stream<Item = String> + Send + Sync>>, child: Child) -> Self {
+        Self { stream, child }
+    }
+}
+
+impl Stream for ChildProcessStream {
+    type Item = String;
+
+    fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
+        self.stream.as_mut().poll_next(cx)
+    }
+}
+
+impl Drop for ChildProcessStream {
+    fn drop(&mut self) {
+        // Attempt to kill the child process when the stream is dropped
+        let _ = self.child.start_kill();
+    }
+}
 
 #[derive(new)]
 pub struct SystemCommandExecutor;
@@ -48,7 +78,7 @@ impl SystemCommandExecutor {
         }
     }
 
-    pub async fn capture_output_follow(&self, cmd: &str, args: &[&str]) -> Result<Box<dyn Stream<Item = String> + Send + Sync>, std::io::Error> {
+    pub async fn capture_output_follow(&self, cmd: &str, args: &[&str]) -> Result<ChildProcessStream, std::io::Error> {
         let mut child = Command::new(cmd)
             .args(args)
             .stdout(Stdio::piped())
@@ -65,6 +95,6 @@ impl SystemCommandExecutor {
 
         let combined_stream = stdout_stream.merge(stderr_stream);
 
-        Ok(Box::new(combined_stream))
+        Ok(ChildProcessStream::new(Box::pin(combined_stream), child))
     }
 }
