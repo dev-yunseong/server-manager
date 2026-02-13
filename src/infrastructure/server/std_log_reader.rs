@@ -1,7 +1,7 @@
 use log::{debug, error, trace};
 use tokio_stream::Stream;
 use crate::domain::server::Server;
-use crate::infrastructure::server::util::{SystemCommandExecutor, ChildProcessStream};
+use crate::infrastructure::server::util::SystemCommandExecutor;
 
 pub struct StdLogReader {
     system_command_executor: SystemCommandExecutor
