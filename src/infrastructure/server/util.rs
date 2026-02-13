@@ -66,7 +66,7 @@ impl SystemCommandExecutor {
             .map(|res| res.unwrap_or_else(|e| format!("stderr error: {}", e)));
 
         let combined_stream = stdout_stream.merge(stderr_stream);
-
+        let combined_stream = ChildProcessStream::new(Box::pin(combined_stream), child);
         Ok(Box::new(combined_stream))
     }
 }
