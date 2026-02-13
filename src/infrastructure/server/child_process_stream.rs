@@ -8,11 +8,11 @@ use tokio_stream::Stream;
 /// and ensures proper cleanup when the stream is dropped.
 pub struct ChildProcessStream {
     child: Child,
-    stream: Pin<Box<dyn Stream<Item = String> + Send + Sync>>,
+    stream: Pin<Box<dyn Stream<Item = String> + Send>>,
 }
 
 impl ChildProcessStream {
-    pub(crate) fn new(stream: Pin<Box<dyn Stream<Item = String> + Send + Sync>>, child: Child) -> Self {
+    pub(crate) fn new(stream: Pin<Box<dyn Stream<Item = String> + Send>>, child: Child) -> Self {
         Self { child, stream }
     }
 }
