@@ -1,4 +1,5 @@
 use async_trait::async_trait;
+use tokio_stream::Stream;
 use crate::domain::server::{health::Health, Server};
 
 pub trait ServerRepository : Send + Sync {
@@ -12,4 +13,5 @@ pub trait ServerManager : Send + Sync {
     async fn healthcheck(&self, name: &str) -> Health;
     async fn healthcheck_all(&self) -> Vec<(&str, Health)>;
     async fn logs(&self, name: &str, n: i32) -> Option<String>;
+    async fn logs_stream(&self, name: &str) -> Option<Box<dyn Stream<Item=String> + Send>>;
 }

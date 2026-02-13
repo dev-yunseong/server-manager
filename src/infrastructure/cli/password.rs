@@ -16,10 +16,10 @@ impl PasswordCommands {
         match self {
             PasswordCommands::Set { password } => {
                 println!("Password set");
-                auth_use_case.set_password(Some(password.clone())).await;
+                let _ = auth_use_case.set_password(Some(password.clone())).await;
             },
             PasswordCommands::Clear => {
-                auth_use_case.set_password(None).await;
+                let _ = auth_use_case.set_password(None).await;
                 println!("Password removed");
             }
         }

@@ -2,6 +2,27 @@
 
 A server monitoring and remote control tool via messenger.
 
+## Table of Contents
+
+- [Features](#features)
+- [Installation](#installation)
+- [Configuration](#configuration)
+  - [Server Management](#server-management)
+  - [Client Management](#client-management)
+  - [Event Management](#event-management)
+  - [Password Management](#password-management)
+- [Usage](#usage)
+  - [Available Commands](#available-commands)
+  - [Running the Watchdog](#running-the-watchdog)
+
+
+## Features
+
+- Monitor server health and logs.
+- Remote control servers via messenger bots (e.g., Telegram).
+- Get notified when specific keywords are found in server logs or health checks.
+- Secure access with password-based authentication.
+
 ## Installation
 
 To build the project, you need Rust and Cargo installed. If you don't have them, you can install them from [rust-lang.org](https://www.rust-lang.org/tools/install).
@@ -16,80 +37,76 @@ If you encounter issues during installation, please refer to the [Troubleshootin
 
 ## Configuration
 
+The `server-watchdog` CLI is used to configure the application.
+
 ### Server Management
 
-To add a new server to be monitored:
-
-```bash
-server-watchdog server add
-```
-
-You will be prompted to enter the server's details.
-
-To list the currently configured servers:
-
-```bash
-server-watchdog server list
-```
+- **Add a server:**
+  ```bash
+  server-watchdog server add
+  ```
+- **List servers:**
+  ```bash
+  server-watchdog server list
+  ```
 
 ### Client Management
 
-To add a new client (e.g., for Telegram notifications):
+- **Add a client:**
+  ```bash
+  server-watchdog client add
+  ```
+- **List clients:**
+  ```bash
+  server-watchdog client list
+  ```
 
-```bash
-server-watchdog client add
-```
+### Event Management
 
-You will be prompted for the client's details.
-
-To list the currently configured clients:
-
-```bash
-server-watchdog client list
-```
+- **Add an event:**
+  ```bash
+  server-watchdog event add
+  ```
+  You will be prompted to enter the event's details (name, type, target server, keyword).
+- **List events:**
+  ```bash
+  server-watchdog event list
+  ```
+- **Remove an event:**
+  ```bash
+  server-watchdog event remove <event_name>
+  ```
 
 ### Password Management
 
-To set the password for the bot:
-
-```bash
-server-watchdog password set <password>
-```
-
-You will be prompted to enter the password.
-
+- **Set the password:**
+  ```bash
+  server-watchdog password set <password>
+  ```
 
 ## Usage
 
-Once the watchdog is running, you can interact with it through the configured messenger client (e.g., Telegram).
-
 ### Available Commands
 
-- `/register <password>`: Registers you to use the bot.
+Once the watchdog is running, you can interact with it through the configured messenger client (e.g., Telegram).
 
-  - `password`: The password you set for the bot.
-  
-- `/logs <server_name> <lines>`: Fetches the last `<lines>` of logs from the specified server.
+- **/register `<password>`**: Registers you to use the bot.
+    - `password`: The password you set for the bot.
 
-  - `server_name`: The name you assigned to the server during configuration.
-  - `lines`: The number of log lines to retrieve.
+- **/alarm `add` `<event_name>`**: Adds an alarm for a pre-configured event.
+- **/alarm `remove` `<event_name>`**: Removes an alarm for a pre-configured event.
+- **/alarm `list`**: Lists all active alarms.
 
-  Example:
-  ```
-  /logs my-web-server 100
-  ```
+- **/event `[list]`**: Lists all configured events.
+    - `list` (optional): Displays a list of all configured events. If omitted, acts the same as `/event list`.
 
-- `/health [server_name]`: Checks the health of the specified server. If no server name is provided, it will check all registered servers.
+- **/logs `<server_name>` `<lines>`**: Fetches the last `<lines>` of logs from the specified server.
+    - `server_name`: The name you assigned to the server.
+    - `lines`: The number of log lines to retrieve.
 
-  - `server_name` (optional): The name you assigned to the server during configuration.
+- **/health `[server_name]`**: Checks the health of the specified server. If no server name is provided, it will check all registered servers.
+    - `server_name` (optional): The name you assigned to the server.
 
-  Examples:
-  ```
-  /health my-web-server
-  ```
-  ```
-  /health
-  ```
 
 ### Running the Watchdog
 

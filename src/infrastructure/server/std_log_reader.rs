@@ -1,4 +1,5 @@
 use log::{debug, error, trace};
+use tokio_stream::Stream;
 use crate::domain::server::Server;
 use crate::infrastructure::server::util::SystemCommandExecutor;
 
@@ -13,9 +14,45 @@ impl StdLogReader {
             system_command_executor: SystemCommandExecutor::new()
         }
     }
+
+    pub async fn read_follow(&self, server: &Server) -> Option<Box<dyn Stream<Item = String> + Send>> {
+        trace!("StdLogReader::read_follow for server: {}", server.name);
+        let log_command = server.log_command.as_ref()?;
+
+        if log_command.is_empty() {
+            return None;
+        }
+
+        debug!("log_command: {:?}", log_command);
+
+        let mut args: Vec<&str> = log_command[1..]
+            .iter()
+            .map(|s| s.as_str())
+            .collect();
+
+        let command = log_command[0].as_str();
+
+        match command {
+            "docker" => {
+                args.push("-f");
+            }
+            _ => {
+                args.insert(0, "-f");
+            }
+        }
+
+        self.system_command_executor.capture_output_follow(
+            command, &args
+        ).await.ok()
+    }
+
     pub async fn read(&self, server: &Server, n: i32) -> Option<String> {
         trace!("StdLogReader::read for server: {}, n: {}", server.name, n);
         if let Some(log_command) = server.log_command.as_ref() {
+            if log_command.is_empty() {
+                return None;
+            }
+
             debug!("log_command: {:?}", log_command);
             let n_str = n.to_string();
 

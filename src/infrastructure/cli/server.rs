@@ -3,8 +3,7 @@ use log::{debug, trace};
 use crate::application::config::ServerConfigUseCase;
 use crate::domain::config::ServerConfig;
 use crate::domain::server::Server;
-use crate::infrastructure::cli::util::{read_int, read_string, read_string_option, FormatChecker};
-use crate::infrastructure::config::ServerConfigAdapter;
+use crate::infrastructure::cli::util::{read_string, read_string_option, FormatChecker};
 
 #[derive(Subcommand)]
 #[derive(Debug)]
@@ -29,12 +28,13 @@ impl ServerCommands {
 
                 let config = ServerConfig::new(name, base_url, docker_container_name, health_check_path, kill_path, log_command);
                 debug!("new server config: {:?}", &config);
-                server_config_adapter.add_server(config).await;
+                let _ = server_config_adapter.add_server(config).await;
             },
             ServerCommands::List => {
                 debug!("list server");
-                let server_config_adapter = ServerConfigAdapter {};
-                let servers = server_config_adapter.list_server().await;
+
+                let servers: Vec<ServerConfig> = server_config_adapter.list_server().await
+                    .unwrap();
                 debug!("servers: {:?}", &servers);
 
                 println!("--- Server List ---");

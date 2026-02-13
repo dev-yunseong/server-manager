@@ -29,11 +29,12 @@ impl ClientCommands {
                     }
                 };
                 debug!("new client config: {:?}", &client);
-                client_config_use_case.add_client(client).await;
+                let _ = client_config_use_case.add_client(client).await;
             },
             ClientCommands::List => {
                 debug!("list client");
-                let clients = client_config_use_case.list_client().await;
+                let clients = client_config_use_case.list_client().await
+                    .unwrap();
                 debug!("clients: {:?}", &clients);
                 println!("--- Client List ---");
                 if clients.is_empty() {
