@@ -1,5 +1,6 @@
 use clap::Subcommand;
 use log::{debug, trace};
+use struct_input::StructInputTrait;
 use crate::application::config::EventConfigUseCase;
 use crate::domain::config::EventConfig;
 use crate::infrastructure::cli::util::{read_string, FormatChecker};
@@ -19,17 +20,7 @@ impl EventCommands {
             EventCommands::Add => {
                 debug!("add event");
                 println!("--- Add Event ---");
-                let name = read_string("name", FormatChecker::Name).await;
-                let event_type = read_string("type (logs, health)", FormatChecker::Name).await;
-                let target = read_string("target server name", FormatChecker::Name).await;
-                let keyword = read_string("keyword", FormatChecker::None).await;
-
-                let config = EventConfig {
-                    r#type: event_type,
-                    name,
-                    target,
-                    keyword,
-                };
+                let config = EventConfig::from_input().await;
                 debug!("new event config: {:?}", &config);
                 event_config_adapter.add_event(config).await.unwrap();
             },

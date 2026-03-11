@@ -1,5 +1,6 @@
 use clap::Subcommand;
 use log::{debug, trace};
+use struct_input::StructInputTrait;
 use crate::application::config::ServerConfigUseCase;
 use crate::domain::config::ServerConfig;
 use crate::domain::server::Server;
@@ -19,14 +20,7 @@ impl ServerCommands {
             ServerCommands::Add => {
                 debug!("add server");
                 println!("--- Add Server ---");
-                let name = read_string("name", FormatChecker::Name).await;
-                let base_url = read_string_option("base url", FormatChecker::BaseUrl).await;
-                let docker_container_name = read_string_option("docker container name", FormatChecker::NotAllowWhitespace).await;
-                let health_check_path = read_string_option("health check path", FormatChecker::NotAllowWhitespace).await;
-                let kill_path = read_string_option("kill path", FormatChecker::NotAllowWhitespace).await;
-                let log_command = read_string_option("log command", FormatChecker::None).await;
-
-                let config = ServerConfig::new(name, base_url, docker_container_name, health_check_path, kill_path, log_command);
+                let config = ServerConfig::from_input().await;
                 debug!("new server config: {:?}", &config);
                 let _ = server_config_adapter.add_server(config).await;
             },

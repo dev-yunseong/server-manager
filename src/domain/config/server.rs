@@ -1,12 +1,19 @@
 use serde::{Deserialize, Serialize};
+use struct_input::StructInput;
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, StructInput)]
 pub struct ServerConfig {
+    #[struct_input(format="Name")]
     pub name: String,
+    #[struct_input(format="BaseUrl")]
     pub base_url: Option<String>,
+    #[struct_input(format="NotAllowWhitespace")]
     pub docker_container_name: Option<String>,
+    #[struct_input(format="NotAllowWhitespace")]
     pub health_check_path: Option<String>,
+    #[struct_input(format="NotAllowWhitespace")]
     pub kill_path: Option<String>,
+    #[struct_input]
     pub log_command: Option<String>,
 }
 

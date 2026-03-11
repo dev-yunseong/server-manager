@@ -1,11 +1,16 @@
 use derive_new::new;
 use serde::{Deserialize, Serialize};
+use struct_input::StructInput;
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, StructInput)]
 pub struct EventConfig {
-    pub r#type: String, // logs, health
+    #[struct_input(format="Name")]
     pub name: String,
+    #[struct_input(format="Name", message="--- type (logs, health) ---")]
+    pub r#type: String, // logs, health
+    #[struct_input(format="Name", message="--- target server name ---")]
     pub target: String, // target server
+    #[struct_input]
     pub keyword: String,
 }
 
