@@ -43,45 +43,45 @@ The `server-watchdog` CLI is used to configure the application.
 
 - **Add a server:**
   ```bash
-  server-watchdog server add
+  sw server add
   ```
 - **List servers:**
   ```bash
-  server-watchdog server list
+  sw server list
   ```
 
 ### Client Management
 
 - **Add a client:**
   ```bash
-  server-watchdog client add
+  sw client add
   ```
 - **List clients:**
   ```bash
-  server-watchdog client list
+  sw client list
   ```
 
 ### Event Management
 
 - **Add an event:**
   ```bash
-  server-watchdog event add
+  sw event add
   ```
   You will be prompted to enter the event's details (name, type, target server, keyword).
 - **List events:**
   ```bash
-  server-watchdog event list
+  sw event list
   ```
 - **Remove an event:**
   ```bash
-  server-watchdog event remove <event_name>
+  sw event remove <event_name>
   ```
 
 ### Password Management
 
 - **Set the password:**
   ```bash
-  server-watchdog password set <password>
+  sw password set <password>
   ```
 
 ## Usage
@@ -113,5 +113,5 @@ Once the watchdog is running, you can interact with it through the configured me
 To start the server watchdog application:
 
 ```bash
-server-watchdog run
+sw run
 ```
