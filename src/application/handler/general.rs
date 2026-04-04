@@ -8,16 +8,6 @@ use crate::application::handler::MessageHandler;
 use crate::application::server::ServerManager;
 use crate::domain::client::Message;
 
-pub const INVALID_COMMAND_MESSAGE: &str = r#"Invalid or unknown command.
-
-Available commands:
-- /logs <server_name> <lines>
-  Fetches the last <lines> of logs from the specified server.
-  Example: /logs main 100
-
-- /health (server_name)
-  (server_name): optional. If provided, returns the health status of the specified server."#;
-
 use std::sync::Arc;
 
 #[derive(new)]
